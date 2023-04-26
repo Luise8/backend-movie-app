@@ -1,12 +1,23 @@
 const mongoose = require('mongoose');
 
 const movieSchema = new mongoose.Schema({
-  name: { type: String, required: true },
-  photo: String,
-  description: { type: String, required: true },
+  name: {
+    type: String,
+    required: true,
+    minlength: 2,
+    maxlength: 213,
+  },
+  photo: { type: String, required: true, maxlength: 300 },
+  description: { type: String, required: true, maxlength: 1000 },
   date: { type: Date, required: true },
+  release_date: {
+    type: String,
+    required: true,
+    minlength: 10,
+    maxlength: 10,
+  },
   idTMDB: {
-    type: String, required: true,
+    type: String, required: true, minlength: 1, maxlength: 20,
   },
   rateCount: {
     type: Number, default: 0,
@@ -16,10 +27,6 @@ const movieSchema = new mongoose.Schema({
   },
   rateAverage: {
     type: Number, default: 0,
-  },
-  reviewList: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'ReviewList',
   },
 });
 

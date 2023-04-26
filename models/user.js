@@ -6,10 +6,14 @@ const userSchema = mongoose.Schema({
     type: String,
     required: true,
     unique: true,
-    minlength: 3,
+    minlength: 5,
+    maxlength: 20,
   },
-  photo: String,
-  bio: String,
+  photo: { type: String, maxlength: 300 },
+  bio: {
+    type: String,
+    maxlength: 300,
+  },
   date: {
     type: Date,
     required: true,
@@ -25,6 +29,7 @@ const userSchema = mongoose.Schema({
   watchlist: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Watchlist',
+    required: true,
   },
 });
 

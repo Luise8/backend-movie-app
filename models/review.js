@@ -1,16 +1,22 @@
 const mongoose = require('mongoose');
 
 const reviewSchema = new mongoose.Schema({
-  title: { type: String, required: true, minlength: 12 },
-  body: { type: String, required: true, minlength: 400 },
+  title: {
+    type: String, required: true, minlength: 12, maxlength: 175,
+  },
+  body: {
+    type: String, required: true, minlength: 400, maxlength: 10000,
+  },
   date: { type: Date, required: true },
   userId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
+    required: true,
   },
-  reviewList: {
+  movieId: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'ReviewList',
+    ref: 'Movie',
+    required: true,
   },
 });
 
