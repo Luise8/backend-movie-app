@@ -1,20 +1,27 @@
 const { createLogger, format, transports } = require('winston');
+const path = require('path');
 
 const {
-  combine, timestamp, printf, json, colorize,
+  combine, timestamp, printf, json, colorize, label, splat,
 } = format;
 
 const myFormatConsoleLog = printf(({
-  level, message, timestamp,
-}) => `${timestamp} ${level}: ${message}`);
+  level, message, label, timestamp,
+}) => `${timestamp} ${level} [${label}]: ${message}`);
 
 const logger = createLogger({
   transports: [
     new transports.Console({
       level: 'debug',
-      format: combine(colorize(), timestamp({
-        format: 'YYYY-MM-DD HH:mm:ss',
-      }), myFormatConsoleLog),
+      format: combine(
+        colorize(),
+        label({ label: path.basename(require.main.filename) }),
+        timestamp({
+          format: 'YYYY-MM-DD HH:mm:ss',
+        }),
+        splat(),
+        myFormatConsoleLog,
+      ),
     }),
   ],
 });
@@ -28,9 +35,14 @@ if (process.env.NODE_ENV === 'production') {
       level: 'error',
       maxsize: 5242880, // 5MB
       maxFiles: 5,
-      format: combine(timestamp({
-        format: 'YYYY-MM-DD HH:mm:ss',
-      }), json()),
+      format: combine(
+        label({ label: require.main.filename }),
+        timestamp({
+          format: 'YYYY-MM-DD HH:mm:ss',
+        }),
+        splat(),
+        json(),
+      ),
     }),
   );
   logger.add(new transports.File({
@@ -38,9 +50,14 @@ if (process.env.NODE_ENV === 'production') {
     level: 'info',
     maxsize: 5242880, // 5MB
     maxFiles: 5,
-    format: combine(timestamp({
-      format: 'YYYY-MM-DD HH:mm:ss',
-    }), json()),
+    format: combine(
+      label({ label: require.main.filename }),
+      timestamp({
+        format: 'YYYY-MM-DD HH:mm:ss',
+      }),
+      splat(),
+      json(),
+    ),
   }));
 }
 
