@@ -7,13 +7,11 @@ const movieSchema = new mongoose.Schema({
     minlength: 2,
     maxlength: 213,
   },
-  photo: { type: String, required: true, maxlength: 300 },
+  photo: { type: String, maxlength: 300 },
   description: { type: String, required: true, maxlength: 1000 },
   date: { type: Date, required: true },
   release_date: {
     type: String,
-    required: true,
-    minlength: 10,
     maxlength: 10,
   },
   idTMDB: {
