@@ -1,0 +1,18 @@
+// All of the movies
+###
+GET http://localhost:3003/api/v1.0/movies
+
+###    // One movie
+GET http://localhost:3003/api/v1.0/movies/9799 HTTP/1.1
+
+###   // All of the reviews of one movie
+GET http://localhost:3003/api/v1.0/movies/9799/reviews HTTP/1.1
+
+###   // One review of one movie
+GET http://localhost:3003/api/v1.0/movies/9799/reviews/64493b16236a412ea5eb6550 HTTP/1.1
+
+###   // One review of one movie with WRONG id of review
+GET http://localhost:3003/api/v1.0/movies/9799/reviews/64493b16236a412ea5eb6559 HTTP/1.1
+
+###   // One review of one movie with wrong id of review
+GET http://localhost:3003/api/movies/985445/reviews/64493b16236a412ea5eb6550 HTTP/1.1
