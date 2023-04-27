@@ -5,7 +5,7 @@ const { logger } = require('../utils/logger');
 
 moviesRouter.get('/', async (request, response, next) => {
   try {
-    const movieList = await Movie.find({}).limit(10).sort({ date: -1 }).exec();
+    const movieList = await Movie.find({}).limit(10).sort({ rateAverage: -1, date: -1 }).exec();
     logger.debug('%O', movieList);
     response.json(movieList);
   } catch (exception) {
@@ -30,7 +30,7 @@ moviesRouter.get('/:id/reviews', async (request, response, next) => {
   try {
     const movie = await Movie.findOne({ idTMDB: request.params.id }).lean();
     if (movie) {
-      const reviews = await Review.find({ movieId: movie.id });
+      const reviews = await Review.find({ movieId: movie._id });
       logger.debug('🚀 ~ file: movies.js:34 ~ moviesRouter.get ~ reviews:%O', reviews);
       if (reviews.length === 0) {
         response.json({
@@ -53,7 +53,9 @@ moviesRouter.get('/:id/reviews', async (request, response, next) => {
 
 moviesRouter.get('/:id/reviews/:idReview', async (request, response, next) => {
   try {
-    const review = await Review.findById(request.params.idReview);
+    const review = await Review.findById(request.params.idReview).populate('movieId', {
+      name: 1, release_date: 1, photo: 1, idTMDB: 1,
+    });
     if (review) {
       response.json(review);
     } else {
