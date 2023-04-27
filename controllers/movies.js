@@ -34,12 +34,20 @@ moviesRouter.get('/:id/reviews', async (request, response, next) => {
       logger.debug('🚀 ~ file: movies.js:34 ~ moviesRouter.get ~ reviews:%O', reviews);
       if (reviews.length === 0) {
         response.json({
-          ...movie,
+          idTMDB: movie.idTMDB,
+          name: movie.name,
+          release_date: movie.release_date,
+          photo: movie.photo,
+          rateAverage: movie.rateAverage,
           reviews: [],
         });
       } else {
         response.json({
-          ...movie,
+          idTMDB: movie.idTMDB,
+          name: movie.name,
+          release_date: movie.release_date,
+          photo: movie.photo,
+          rateAverage: movie.rateAverage,
           reviews,
         });
       }
