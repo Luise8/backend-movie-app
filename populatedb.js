@@ -42,7 +42,7 @@ const initialMovies = [
     date: new Date(),
     release_date: '2006-06-03',
     idTMDB: 9615,
-    id: '6447e80aa1f0cd363649d595',
+    _id: '6447e80aa1f0cd363649d595',
   },
   {
     name: 'The Fast and the Furious',
@@ -51,7 +51,7 @@ const initialMovies = [
     date: new Date(),
     release_date: '1954-11-01',
     idTMDB: 20174,
-    id: '6447e80aa1f0cd363649d596',
+    _id: '6447e80aa1f0cd363649d596',
   },
   {
     name: 'Furious and Fast: The Story of Fast Music and the Patiphone',
