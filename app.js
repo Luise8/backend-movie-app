@@ -4,6 +4,7 @@ const mongoose = require('mongoose');
 const config = require('./utils/config');
 const { logger } = require('./utils/logger');
 const middleware = require('./utils/middleware');
+const moviesRouter = require('./controllers/movies');
 
 const app = express();
 
@@ -20,6 +21,8 @@ mongoose.connect(config.MONGODB_URI)
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(morgan('dev', { stream: logger.stream }));
+app.use('/api/v1.0/movies', moviesRouter);
+
 app.use(middleware.unknownEndpoint);
 app.use(middleware.errorHandler);
 
