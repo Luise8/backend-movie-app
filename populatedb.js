@@ -33,7 +33,7 @@ const initialMovies = [
     date: new Date(),
     release_date: '2001-06-22',
     idTMDB: 9799,
-    id: '6447e80aa1f0cd363649d594',
+    _id: '6447e80aa1f0cd363649d594',
   },
   {
     name: 'The Fast and the Furious: Tokyo Drift',
@@ -172,6 +172,7 @@ async function addInitialMovies() {
 const initialReviews = [
 // First user 6418e218c4aeca730255a083 review of movie initialMovies[0]
   {
+    _id: '64493b16236a412ea5eb6550',
     title: 'First review made',
     body: 'Lorem ipsum dolor sit amet, consectetuer adipiscing entum semper nisi. Aenean vulputate eleifend tellus. Aenean leo ligula, porttitor eu, consequat vitaLorem ipsum dolor sit amet, consectetuer adipiscing entum semper nisi. Aenean vulputate eleifend tellus. Aenean leo ligula, porttitor eu, consequat vitaLorem ipsum dolor sit amet, consectetuer adipiscing entum semper nisi. Aenean vulputate eleifend tellus. Aenean leo ligula, porttitor eu, consequat vitaLorem ipsum dolor sit amet, consectetuer adipiscing entum semper nisi. Aenean vulputate eleifend tellus. Aenean leo ligula, porttitor eu, consequat vitaLorem ipsum dolor sit amet, consectetuer adipiscing entum semper nisi. Aenean vulputate eleifend tellus. Aenean leo ligula, porttitor eu, consequat vita',
     date: new Date(),
