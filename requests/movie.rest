@@ -2,11 +2,18 @@
 ###
 GET http://localhost:3003/api/v1.0/movies
 
+// All of the movies with queries page and pageSize
+###
+GET http://localhost:3003/api/v1.0/movies?page=2&pageSize=5
+
 ###    // One movie
 GET http://localhost:3003/api/v1.0/movies/9799 HTTP/1.1
 
 ###   // All of the reviews of one movie
 GET http://localhost:3003/api/v1.0/movies/9799/reviews HTTP/1.1
+
+###   // All of the reviews of one movie with queries page and pageSize
+GET http://localhost:3003/api/v1.0/movies/9799/reviews?page=1&pageSize=1 HTTP/1.1
 
 ###   // One review of one movie
 GET http://localhost:3003/api/v1.0/movies/9799/reviews/64493b16236a412ea5eb6550 HTTP/1.1
