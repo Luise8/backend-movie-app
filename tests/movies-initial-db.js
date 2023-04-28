@@ -142,6 +142,7 @@ async function addInitialMovies() {
   const movieObjects = initialMovies.map((movie) => new Movie(movie));
   const promiseArray = movieObjects.map((movie) => movie.save());
   await Promise.all(promiseArray);
+  console.log('Movies added');
 }
 
 // REVIEWS 3
@@ -178,9 +179,12 @@ async function addInitialReviews() {
   const reviewObjects = initialReviews.map((review) => new Review(review));
   const promiseArray = reviewObjects.map((review) => review.save());
   await Promise.all(promiseArray);
+  console.log('Reviews added');
 }
 
 module.exports = {
   addInitialMovies,
   addInitialReviews,
+  initialMovies,
+  initialReviews,
 };
