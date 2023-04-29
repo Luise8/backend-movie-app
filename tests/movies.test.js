@@ -57,7 +57,29 @@ describe('when there is initially some movies saved in db', () => {
     await api.get(`/api/v1.0/movies?page=${page}&pageSize=${pageSize}`).expect(400);
   });
 
-  it('the unique identifier property of the movies is named id', async () => {
+  describe('checking the sort', () => {
+    let newMovie;
+    beforeAll(async () => {
+      newMovie = new Movie({
+        name: 'Movie that must be first by rateAverage 1 over 0 of the rest of movies in initialMovies',
+        description: 'Lorem ipsum dolor sit amet consectetur adipisicing elit. Inventore, iste quis facilis beatae eius mollitia libero assumenda cupiditate illo. Nulla, adipisci omnis corrupti non magnam consequatur beatae ipsum asperiores officiis',
+        idTMDB: await nonExistingId('movie'),
+        date: initialMovies[0].date,
+        rateAverage: 1,
+      });
+      await newMovie.save();
+    });
+
+    it('movies are sorted by rateAverage first, then date and then idTMDB', async () => {
+      const response = await api.get('/api/v1.0/movies');
+      expect(response.body.results[0].name).toContain(newMovie.name);
+    });
+    afterAll(async () => {
+      newMovie.deleteOne({});
+    });
+  });
+
+  it.only('the unique identifier property of the movies is named id', async () => {
     const response = await api.get('/api/v1.0/movies');
 
     expect(response.body.results[0].id).toBeDefined();
