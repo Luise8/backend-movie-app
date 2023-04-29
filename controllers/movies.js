@@ -7,7 +7,7 @@ moviesRouter.get('/', async (request, response, next) => {
   try {
     // Check valid query params
     if ((!/^\d+$/.test(request.query.pageSize) && request.query.pageSize !== undefined) || (!/^\d+$/.test(request.query.page) && request.query.page !== undefined)) {
-      logger.debug('🚀 ~ file: movies.js:12 ~ moviesRouter.get ~ request.query.pageSize: %O', request.query.pageSize);
+      logger.debug('🚀 ~ file: movies.js:13 ~ moviesRouter.get ~ request.query.pageSize: %O', request.query.pageSize);
       response.status(400).end();
       return;
     }
@@ -20,7 +20,7 @@ moviesRouter.get('/', async (request, response, next) => {
     // Get movie count and movies
     const count = await Movie.find({}).count();
     const movieList = await Movie.find({}).limit(pageSize)
-      .sort({ rateAverage: -1, date: -1 }).skip(pageSize * page)
+      .skip(pageSize * page).sort({ rateAverage: -1, date: -1, idTMDB: -1 })
       .exec();
 
     // Get number of prev page
@@ -69,7 +69,7 @@ moviesRouter.get('/:id/reviews', async (request, response, next) => {
   try {
     // Check valid query params
     if ((!/^\d+$/.test(request.query.pageSize) && request.query.pageSize !== undefined) || (!/^\d+$/.test(request.query.page) && request.query.page !== undefined)) {
-      logger.debug('🚀 ~ file: movies.js:12 ~ moviesRouter.get ~ request.query.pageSize: %O', request.query.pageSize);
+      logger.debug('🚀 ~ file: movies.js:75 ~ moviesRouter.get ~ request.query.pageSize: %O', request.query.pageSize);
       response.status(400).end();
       return;
     }
@@ -87,9 +87,9 @@ moviesRouter.get('/:id/reviews', async (request, response, next) => {
       // Get count of reviews of movie and get reviews
       const count = await Review.find({ movieId: movie._id }).count();
       const reviews = await Review.find({ movieId: movie._id }).limit(pageSize)
-        .sort({ date: -1 }).skip(pageSize * page)
+        .sort({ date: -1, userId: -1 }).skip(pageSize * page)
         .exec();
-      logger.debug('🚀 ~ file: movies.js:34 ~ moviesRouter.get ~ reviews:%O', reviews);
+      logger.debug('🚀 ~ file: movies.js:95 ~ moviesRouter.get ~ reviews:%O', reviews);
 
       // Get number of prev page
       let prevPage;
