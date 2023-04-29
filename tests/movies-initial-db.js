@@ -44,6 +44,9 @@ async function nonExistingId(model) {
       date: new Date(),
       userId: usersId[0],
       movieId: '6447e80aa1f0cd363649d594',
+      rateCount: 0,
+      rateValue: 0,
+      rateAverage: 0,
     });
   }
   await item.save();
@@ -62,6 +65,9 @@ const initialMovies = [
     release_date: '2001-06-22',
     idTMDB: '9799',
     _id: '6447e80aa1f0cd363649d594',
+    rateCount: 0,
+    rateValue: 0,
+    rateAverage: 0,
   },
   {
     name: 'The Fast and the Furious: Tokyo Drift',
@@ -71,6 +77,9 @@ const initialMovies = [
     release_date: '2006-06-03',
     idTMDB: '9615',
     _id: '6447e80aa1f0cd363649d595',
+    rateCount: 0,
+    rateValue: 0,
+    rateAverage: 0,
   },
   {
     name: 'The Fast and the Furious',
@@ -79,7 +88,10 @@ const initialMovies = [
     date: new Date().toISOString(),
     release_date: '1954-11-01',
     idTMDB: '20174',
-    _id: '6447e80aa1f0cd363649d596',
+    _id: '6448e80aa1f0cd363649d596',
+    rateCount: 0,
+    rateValue: 0,
+    rateAverage: 0,
   },
   {
     name: 'Furious and Fast: The Story of Fast Music and the Patiphone',
@@ -88,6 +100,10 @@ const initialMovies = [
     date: new Date().toISOString(),
     release_date: '2022-06-08',
     idTMDB: '985445',
+    _id: '6447e80aa1f0cd363649d596',
+    rateCount: 0,
+    rateValue: 0,
+    rateAverage: 0,
   },
   {
     name: 'Tasmanian Devil: The Fast and Furious Life of Errol Flynn',
@@ -96,6 +112,9 @@ const initialMovies = [
     date: new Date().toISOString(),
     release_date: '2007-10-17',
     idTMDB: '467096',
+    rateCount: 0,
+    rateValue: 0,
+    rateAverage: 0,
   },
   {
     name: 'F9',
@@ -104,6 +123,9 @@ const initialMovies = [
     date: new Date().toISOString(),
     release_date: '2021-05-19',
     idTMDB: '385128',
+    rateCount: 0,
+    rateValue: 0,
+    rateAverage: 0,
   },
   {
     name: 'The Fate of the Furious',
@@ -112,6 +134,9 @@ const initialMovies = [
     date: new Date().toISOString(),
     release_date: '2017-04-12',
     idTMDB: '337339',
+    rateCount: 0,
+    rateValue: 0,
+    rateAverage: 0,
   },
   {
     name: 'Fast & Furious Presents: Hobbs & Shaw',
@@ -120,6 +145,9 @@ const initialMovies = [
     date: new Date().toISOString(),
     release_date: '2019-08-01',
     idTMDB: '384018',
+    rateCount: 0,
+    rateValue: 0,
+    rateAverage: 0,
   },
   {
     name: 'Furious 7',
@@ -128,6 +156,9 @@ const initialMovies = [
     date: new Date().toISOString(),
     release_date: '2015-04-01',
     idTMDB: '168259',
+    rateCount: 0,
+    rateValue: 0,
+    rateAverage: 0,
   },
   {
     name: 'Superfast!',
@@ -136,6 +167,9 @@ const initialMovies = [
     date: new Date().toISOString(),
     release_date: '2015-03-05',
     idTMDB: '325358',
+    rateCount: 0,
+    rateValue: 0,
+    rateAverage: 0,
   },
   {
     name: 'Fast & Furious',
@@ -144,6 +178,9 @@ const initialMovies = [
     date: new Date().toISOString(),
     release_date: '2009-04-02',
     idTMDB: '13804',
+    rateCount: 0,
+    rateValue: 0,
+    rateAverage: 0,
   },
   {
     name: 'Fast Five',
@@ -152,6 +189,9 @@ const initialMovies = [
     date: new Date().toISOString(),
     release_date: '2011-04-20',
     idTMDB: '51497',
+    rateCount: 0,
+    rateValue: 0,
+    rateAverage: 0,
   },
   {
     name: 'Fast & Furious 6',
@@ -160,6 +200,9 @@ const initialMovies = [
     date: new Date().toISOString(),
     release_date: '2013-05-21',
     idTMDB: '82992',
+    rateCount: 0,
+    rateValue: 0,
+    rateAverage: 0,
   },
   {
     name: '2 Fast 2 Furious',
@@ -168,6 +211,9 @@ const initialMovies = [
     date: new Date().toISOString(),
     release_date: '2003-06-05',
     idTMDB: '584',
+    rateCount: 0,
+    rateValue: 0,
+    rateAverage: 0,
   },
   {
     name: 'The Turbo Charged Prelude for 2 Fast 2 Furious',
@@ -176,6 +222,9 @@ const initialMovies = [
     date: new Date().toISOString(),
     release_date: '2003-06-03',
     idTMDB: '77959',
+    rateCount: 0,
+    rateValue: 0,
+    rateAverage: 0,
   },
   {
     name: 'Los Bandoleros',
@@ -184,6 +233,9 @@ const initialMovies = [
     date: new Date().toISOString(),
     release_date: '2009-07-28',
     idTMDB: '253835',
+    rateCount: 0,
+    rateValue: 0,
+    rateAverage: 0,
   },
 ];
 
