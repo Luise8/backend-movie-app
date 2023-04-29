@@ -18,6 +18,37 @@ async function addInitialReviews() {
   await Promise.all(promiseArray);
   console.log('Reviews added');
 }
+async function nonExistingId(model) {
+  let item;
+  if (model === 'movie') {
+    const currentMovies = await Movie.find({});
+    let idTMDB = -1;
+    let idTMDBRepeated = true;
+    if (currentMovies.length === 0) {
+      throw new Error('No itmes');
+    }
+    while (idTMDBRepeated) {
+      idTMDB += 1;
+      idTMDBRepeated = currentMovies.some((movie) => movie.idTMDB === idTMDB);
+    }
+    return idTMDB.toString();
+  }
+
+  if (model === 'review') {
+    item = new Review({
+      title: 'Some review to delete later',
+      body: 'Lorem ipsum dolor sit amet, consectetuer adipiscing entum semper nisi. Aenean vulputate eleifend tellus. Aenean leo ligula, porttitor eu, consequat vitaLorem ipsum dolor sit amet, consectetuer adipiscing entum semper nisi. Aenean vulputate eleifend tellus. Aenean leo ligula, porttitor eu, consequat vitaLorem ipsum dolor sit amet, consectetuer adipiscing entum semper nisi. Aenean vulputate eleifend tellus. Aenean leo ligula, porttitor eu, consequat vitaLorem ipsum dolor sit amet, consectetuer adipiscing entum semper nisi. Aenean vulputate eleifend tellus. Aenean leo ligula, porttitor eu, consequat vitaLorem ipsum dolor sit amet, consectetuer adipiscing entum semper nisi. Aenean vulputate eleifend tellus. Aenean leo ligula, porttitor eu, consequat vita',
+      date: new Date(),
+      userId: '6418e218c4aeca730255a084',
+      movieId: '6447e80aa1f0cd363649d594',
+    });
+  }
+  await item.save();
+  await item.deleteOne({});
+
+  return item._id.toString();
+}
+
 // MOVIES 16 movies
 const initialMovies = [
   {
@@ -186,4 +217,5 @@ module.exports = {
   addInitialReviews,
   initialMovies,
   initialReviews,
+  nonExistingId,
 };
