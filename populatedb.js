@@ -1,4 +1,5 @@
 require('dotenv').config();
+const bcrypt = require('bcrypt');
 const Movie = require('./models/movie');
 const Review = require('./models/review');
 const User = require('./models/user');
@@ -52,7 +53,7 @@ function createThirteenUsers() {
         photo: '',
         bio: '',
         date: new Date().toISOString(),
-        passwordHash: `${i}`,
+        passwordHash: bcrypt.hashSync(`${i}`, Number(process.env.saltRounds)),
         watchlist: new mongoose.Types.ObjectId().toString(),
       },
     );
