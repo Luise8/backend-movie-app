@@ -1,6 +1,6 @@
 const passport = require('passport');
 const LocalStrategy = require('passport-local');
-
+const bcrypt = require('bcrypt');
 const User = require('../models/user');
 
 const verifyCallback = (username, password, done) => {
@@ -8,15 +8,17 @@ const verifyCallback = (username, password, done) => {
     .then((user) => {
       if (!user) { return done(null, false, { message: 'Incorrect username' }); }
 
-      const isValid = user.passwordHash === password;
-
-      if (!isValid) {
+      bcrypt.compare(password, user.passwordHash, (err, res) => {
+        if (res) {
+          // passwords match! log user in
+          return done(null, user);
+        }
+        // passwords do not match!
         return done(null, false, { message: 'Incorrect password' });
-      }
-      return done(null, user);
+      });
     })
-    .catch((err) => {
-      done(err);
+    .catch((error) => {
+      done(error);
     });
 };
 
