@@ -1,6 +1,7 @@
 require('dotenv').config();
 const Movie = require('./models/movie');
 const Review = require('./models/review');
+const User = require('./models/user');
 
 console.log(
   'This script populates some test movies, users, reviews, rates, lists and watchlists to your database. Specified database URI below variable. To run just: node populatedb',
@@ -18,14 +19,78 @@ async function main() {
   console.log('Debug: About to connect');
   await mongoose.connect(URI);
   console.log('Debug: Should be connected?');
+  await addInitialUsers();
   await addInitialMovies();
   await addInitialReviews();
   console.log('Debug: Closing mongoose');
   mongoose.connection.close();
 }
 
-// MOVIES 16 movies
-const initialMovies = [
+// USERS 13
+const thirteenUsersId = [
+  '64501354c41b5db06e01c5a4',
+  '64501354c41b5db06e01c5a5',
+  '64501354c41b5db06e01c5a6',
+  '64501354c41b5db06e01c5a7',
+  '64501354c41b5db06e01c5a8',
+  '64501354c41b5db06e01c5a9',
+  '64501354c41b5db06e01c5aa',
+  '64501354c41b5db06e01c5ab',
+  '64501354c41b5db06e01c5ac',
+  '64501354c41b5db06e01c5ad',
+  '64501354c41b5db06e01c5ae',
+  '64501354c41b5db06e01c5af',
+  '64501354c41b5db06e01c5b0',
+];
+function createThirteenUsers() {
+  const users = [];
+  for (let i = 0; i < thirteenUsersId.length; i += 1) {
+    users.push(
+      {
+        _id: thirteenUsersId[i],
+        username: `userNumber${i}`,
+        photo: '',
+        bio: '',
+        date: new Date().toISOString(),
+        passwordHash: `${i}`,
+        watchlist: new mongoose.Types.ObjectId().toString(),
+      },
+    );
+  }
+  return users;
+}
+
+const initialUsers = createThirteenUsers();
+
+async function addInitialUsers() {
+  await User.deleteMany({});
+
+  const userObjects = initialUsers.map((user) => new User(user));
+  const promiseArray = userObjects.map((user) => user.save());
+  await Promise.all(promiseArray);
+  console.log('Added users');
+}
+
+// MOVIES 16
+const sixteenMoviesId = [
+  '6447e80aa1f0cd363649d594',
+  '6447e80aa1f0cd363649d595',
+  '6448e80aa1f0cd363649d596',
+  '6447e80aa1f0cd363649d596',
+  '6450287ee765c993b600122b',
+  '6450287ee765c993b600122c',
+  '6450287ee765c993b600122d',
+  '6450287ee765c993b600122e',
+  '6450287ee765c993b600122f',
+  '6450287ee765c993b6001230',
+  '6450287ee765c993b6001231',
+  '6450287ee765c993b6001232',
+  '6450287ee765c993b6001233',
+  '6450287ee765c993b6001234',
+  '6450287ee765c993b6001235',
+  '6450287ee765c993b6001236',
+];
+const sixteenMoviesWithoutId = [
   {
     name: 'The Fast and the Furious',
     photo: 'https://image.tmdb.org/t/p/w185//lgCEntS9mHagxdL5hb3qaV49YTd.jpg',
@@ -33,7 +98,6 @@ const initialMovies = [
     date: new Date(),
     release_date: '2001-06-22',
     idTMDB: 9799,
-    _id: '6447e80aa1f0cd363649d594',
   },
   {
     name: 'The Fast and the Furious: Tokyo Drift',
@@ -42,7 +106,6 @@ const initialMovies = [
     date: new Date(),
     release_date: '2006-06-03',
     idTMDB: 9615,
-    _id: '6447e80aa1f0cd363649d595',
   },
   {
     name: 'The Fast and the Furious',
@@ -51,7 +114,6 @@ const initialMovies = [
     date: new Date(),
     release_date: '1954-11-01',
     idTMDB: 20174,
-    _id: '6447e80aa1f0cd363649d596',
   },
   {
     name: 'Furious and Fast: The Story of Fast Music and the Patiphone',
@@ -158,7 +220,17 @@ const initialMovies = [
     idTMDB: 253835,
   },
 ];
-
+function createSixteenMovies() {
+  const movies = [];
+  for (let i = 0; i < sixteenMoviesWithoutId.length; i += 1) {
+    movies.push({
+      ...sixteenMoviesWithoutId[i],
+      _id: sixteenMoviesId[i],
+    });
+  }
+  return movies;
+}
+const initialMovies = createSixteenMovies();
 async function addInitialMovies() {
   await Movie.deleteMany({});
 
@@ -170,30 +242,30 @@ async function addInitialMovies() {
 
 // REVIEWS 3
 const initialReviews = [
-// First user 6418e218c4aeca730255a083 review of movie initialMovies[0]
+// First user initialUsers[0] review of movie initialMovies[0]
   {
     _id: '64493b16236a412ea5eb6550',
     title: 'First review made',
     body: 'Lorem ipsum dolor sit amet, consectetuer adipiscing entum semper nisi. Aenean vulputate eleifend tellus. Aenean leo ligula, porttitor eu, consequat vitaLorem ipsum dolor sit amet, consectetuer adipiscing entum semper nisi. Aenean vulputate eleifend tellus. Aenean leo ligula, porttitor eu, consequat vitaLorem ipsum dolor sit amet, consectetuer adipiscing entum semper nisi. Aenean vulputate eleifend tellus. Aenean leo ligula, porttitor eu, consequat vitaLorem ipsum dolor sit amet, consectetuer adipiscing entum semper nisi. Aenean vulputate eleifend tellus. Aenean leo ligula, porttitor eu, consequat vitaLorem ipsum dolor sit amet, consectetuer adipiscing entum semper nisi. Aenean vulputate eleifend tellus. Aenean leo ligula, porttitor eu, consequat vita',
     date: new Date(),
-    userId: '6418e218c4aeca730255a083',
-    movieId: '6447e80aa1f0cd363649d594',
+    userId: initialUsers[0]._id,
+    movieId: initialMovies[0]._id,
   },
-  // First user 6418e218c4aeca730255a083 review of movie initialMovies[1]
+  // First user initialUsers[0] review of movie initialMovies[1]
   {
     title: 'Second review made',
     body: 'Lorem ipsum dolor sit amet, consectetuer adipiscing entum semper nisi. Aenean vulputate eleifend tellus. Aenean leo ligula, porttitor eu, consequat vitaLorem ipsum dolor sit amet, consectetuer adipiscing entum semper nisi. Aenean vulputate eleifend tellus. Aenean leo ligula, porttitor eu, consequat vitaLorem ipsum dolor sit amet, consectetuer adipiscing entum semper nisi. Aenean vulputate eleifend tellus. Aenean leo ligula, porttitor eu, consequat vitaLorem ipsum dolor sit amet, consectetuer adipiscing entum semper nisi. Aenean vulputate eleifend tellus. Aenean leo ligula, porttitor eu, consequat vitaLorem ipsum dolor sit amet, consectetuer adipiscing entum semper nisi. Aenean vulputate eleifend tellus. Aenean leo ligula, porttitor eu, consequat vita',
     date: new Date(),
-    userId: '6418e218c4aeca730255a083',
-    movieId: '6447e80aa1f0cd363649d595',
+    userId: initialUsers[0]._id,
+    movieId: initialMovies[1]._id,
   },
-  // Second user 6418e218c4aeca730255a084 review of movie initialMovies[0]
+  // Second user initialUsers[1] review of movie initialMovies[0]
   {
     title: 'Second review made',
     body: 'Lorem ipsum dolor sit amet, consectetuer adipiscing entum semper nisi. Aenean vulputate eleifend tellus. Aenean leo ligula, porttitor eu, consequat vitaLorem ipsum dolor sit amet, consectetuer adipiscing entum semper nisi. Aenean vulputate eleifend tellus. Aenean leo ligula, porttitor eu, consequat vitaLorem ipsum dolor sit amet, consectetuer adipiscing entum semper nisi. Aenean vulputate eleifend tellus. Aenean leo ligula, porttitor eu, consequat vitaLorem ipsum dolor sit amet, consectetuer adipiscing entum semper nisi. Aenean vulputate eleifend tellus. Aenean leo ligula, porttitor eu, consequat vitaLorem ipsum dolor sit amet, consectetuer adipiscing entum semper nisi. Aenean vulputate eleifend tellus. Aenean leo ligula, porttitor eu, consequat vita',
     date: new Date(),
-    userId: '6418e218c4aeca730255a084',
-    movieId: '6447e80aa1f0cd363649d594',
+    userId: initialUsers[1],
+    movieId: initialMovies[0]._id,
   }];
 
 async function addInitialReviews() {
@@ -204,3 +276,20 @@ async function addInitialReviews() {
   await Promise.all(promiseArray);
   console.log('Added reviews');
 }
+
+// 13
+const otherFreeObjectIds = [
+  '64502ae06dc338b6e80b8c55',
+  '64502ae06dc338b6e80b8c56',
+  '64502ae06dc338b6e80b8c57',
+  '64502ae06dc338b6e80b8c58',
+  '64502ae06dc338b6e80b8c59',
+  '64502ae06dc338b6e80b8c5a',
+  '64502ae06dc338b6e80b8c5b',
+  '64502ae06dc338b6e80b8c5c',
+  '64502ae06dc338b6e80b8c5d',
+  '64502ae06dc338b6e80b8c5e',
+  '64502ae06dc338b6e80b8c5f',
+  '64502ae06dc338b6e80b8c60',
+  '64502ae06dc338b6e80b8c61',
+];
