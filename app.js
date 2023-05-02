@@ -7,6 +7,7 @@ const config = require('./utils/config');
 const { logger } = require('./utils/logger');
 const middleware = require('./utils/middleware');
 const moviesRouter = require('./controllers/movies');
+const loginRouter = require('./controllers/login');
 const passport = require('./utils/passport');
 
 const app = express();
@@ -37,6 +38,7 @@ app.use(express.urlencoded({ extended: false }));
   }));
   app.use(morgan('dev', { stream: logger.stream }));
   app.use('/api/v1.0/movies', moviesRouter);
+  app.use('/api/v1.0/login', loginRouter);
 
   app.use(middleware.unknownEndpoint);
   app.use(middleware.errorHandler);

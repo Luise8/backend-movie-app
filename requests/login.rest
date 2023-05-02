@@ -1,0 +1,28 @@
+### SUCCEDS LOGIN
+POST http://localhost:3003/api/v1.0/login 
+Content-Type: application/json
+
+{
+  "username": "userNumber1",
+  "password": "1"
+}
+
+### SUCCEDS LOGIN AOTHER USER
+POST http://localhost:3003/api/v1.0/login 
+Content-Type: application/json
+
+{
+
+  "username": "userNumber2",
+  "password": "2"
+}
+
+### WRONG LOGIN
+POST http://localhost:3003/api/v1.0/login 
+Content-Type: application/json
+
+{
+
+  "username": "userNumber1",
+  "password": "wrong password"
+}
