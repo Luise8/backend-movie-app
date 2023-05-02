@@ -7,6 +7,7 @@ const config = require('./utils/config');
 const { logger } = require('./utils/logger');
 const middleware = require('./utils/middleware');
 const moviesRouter = require('./controllers/movies');
+const passport = require('./utils/passport');
 
 const app = express();
 app.use(express.json());
@@ -39,6 +40,9 @@ app.use(express.urlencoded({ extended: false }));
 
   app.use(middleware.unknownEndpoint);
   app.use(middleware.errorHandler);
+
+  app.use(passport.initialize());
+  app.use(passport.session());
 }());
 
 module.exports = app;
