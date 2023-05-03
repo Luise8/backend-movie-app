@@ -1,0 +1,35 @@
+### // CREATE NEW USER
+POST http://localhost:3003/api/v1.0/users HTTP/1.1
+Content-Type: application/json
+
+{
+      "username": "mluukkai",
+      "password": "password1"
+}
+
+### // CREATE ANOTHER USER
+POST http://localhost:3003/api/v1.0/users HTTP/1.1
+Content-Type: application/json
+
+{
+      "username": "Peters",
+      "password": "password2"
+}
+
+### // ATTEMPTING TO CREATE A USER WITH TAKEN USERNAME. TRY THIS AFTER THE PREVIOUS.
+POST http://localhost:3003/api/v1.0/users HTTP/1.1
+Content-Type: application/json
+
+{
+      "username": "Peters",
+      "password": "password2"
+}
+
+### // ATTEMPTING TO CREATE A USER WITH USERNAME TOO SHORT
+POST http://localhost:3003/api/v1.0/users HTTP/1.1
+Content-Type: application/json
+
+{
+      "username": "Pet",
+      "password": "password2"
+}
