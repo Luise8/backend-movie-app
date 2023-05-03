@@ -5,14 +5,6 @@ const User = require('../models/user');
 
 usersRouter.post('/', async (request, response, next) => {
   try {
-    const isTakenUsername = await User.findOne({
-      username: request.body.username,
-    });
-    if (isTakenUsername !== null) {
-      response.status(400).json({
-        error: 'the username is taken',
-      });
-    }
     bcrypt.hash(
       request.body.password,
       Number(process.env.saltRounds),
