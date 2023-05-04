@@ -53,7 +53,7 @@ function createThirteenUsers() {
         photo: '',
         bio: '',
         date: new Date().toISOString(),
-        passwordHash: bcrypt.hashSync(`${i}`, Number(process.env.saltRounds)),
+        passwordHash: bcrypt.hashSync(`userNumber${i}`, Number(process.env.saltRounds)),
         watchlist: new mongoose.Types.ObjectId().toString(),
       },
     );

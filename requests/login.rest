@@ -4,7 +4,7 @@ Content-Type: application/json
 
 {
   "username": "userNumber1",
-  "password": "1"
+  "password": "userNumber1"
 }
 
 ### SUCCEDS LOGIN AOTHER USER
@@ -14,7 +14,7 @@ Content-Type: application/json
 {
 
   "username": "userNumber2",
-  "password": "2"
+  "password": "userNumber2"
 }
 
 ### WRONG LOGIN
@@ -24,5 +24,15 @@ Content-Type: application/json
 {
 
   "username": "userNumber1",
-  "password": "wrong password"
+  "password": "wrongPassword"
+}
+
+### WRONG LOGIN
+POST http://localhost:3003/api/v1.0/login 
+Content-Type: application/json
+
+{
+
+  "username": "userNumber1",
+  "password": "wrong password with spaces"
 }
