@@ -1,7 +1,37 @@
 const loginRouter = require('express').Router();
 const passport = require('passport');
+const { body, validationResult } = require('express-validator');
 
-loginRouter.post('/', passport.authenticate('local', { successRedirect: '/api/v1.0/login/login-success', failureRedirect: '/api/v1.0/login/login-failure', failureMessage: true }));
+loginRouter.post(
+  '/',
+  body('username')
+    .custom((value) => !/\s/.test(value))
+    .withMessage('No spaces are allowed in the username')
+    .isLength({ min: 5 })
+    .escape()
+    .withMessage('Username must be specified with min 5 characters')
+    .isAlphanumeric()
+    .withMessage('Username has non-alphanumeric characters.'),
+  body('password')
+    .custom((value) => !/\s/.test(value))
+    .withMessage('No spaces are allowed in the password')
+    .isLength({ min: 5 })
+    .withMessage('Password must be specified with min 5 characters'),
+
+  (req, res, next) => {
+    const result = validationResult(req);
+    if (!result.isEmpty()) {
+      return res.json({ errors: result.array() });
+    }
+    return next();
+  },
+
+  passport.authenticate('local'),
+
+  (req, res) => {
+    res.json(req.user.username);
+  },
+);
 
 loginRouter.get('/', (req, res, next) => {
   if (req.session.hasOwnProperty('messages')) {
@@ -13,15 +43,6 @@ loginRouter.get('/', (req, res, next) => {
     <br><br><input type="submit" value="Submit"></form>';
 
   res.send(form);
-});
-
-loginRouter.get('/login-success', (req, res, next) => {
-  res.send('You successfully logged in.');
-});
-
-loginRouter.get('/login-failure', (req, res, next) => {
-  console.log(req.message);
-  res.send('You entered the wrong password.');
 });
 
 module.exports = loginRouter;
