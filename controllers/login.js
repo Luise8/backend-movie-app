@@ -19,17 +19,29 @@ loginRouter.post(
     .withMessage('Password must be specified with min 5 characters'),
 
   (req, res, next) => {
-    const result = validationResult(req);
-    if (!result.isEmpty()) {
-      return res.json({ errors: result.array() });
+    try {
+      const result = validationResult(req);
+      if (!result.isEmpty()) {
+        return res.status(400).json({ errors: result.array() });
+      }
+      return next();
+    } catch (error) {
+      next(error);
     }
-    return next();
   },
-
   passport.authenticate('local'),
 
-  (req, res) => {
-    res.json(req.user.username);
+  (req, res, next) => {
+    try {
+      res.json({
+        currentSession: {
+          isAuth: req.isAuthenticated?.() || false,
+          userId: req.user?._id || null,
+        },
+      });
+    } catch (error) {
+      next(error);
+    }
   },
 );
 
