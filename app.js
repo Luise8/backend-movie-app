@@ -7,14 +7,12 @@ const config = require('./utils/config');
 const { logger } = require('./utils/logger');
 const middleware = require('./utils/middleware');
 const moviesRouter = require('./controllers/movies');
-const loginRouter = require('./controllers/login');
+const authRouter = require('./controllers/auth');
 const usersRouter = require('./controllers/users');
 const signUpRouter = require('./controllers/signup');
 const passport = require('./utils/passport');
 
 const app = express();
-app.use(express.json());
-app.use(express.urlencoded({ extended: false }));
 
 (async function () {
   mongoose.set('strictQuery', false);
@@ -28,6 +26,8 @@ app.use(express.urlencoded({ extended: false }));
     .catch((error) => {
       logger.info('error connecting to MongoDB:', error.message);
     });
+  app.use(express.json());
+  app.use(express.urlencoded({ extended: false }));
   app.use(session({
     secret: process.env.SECRET,
     resave: true,
@@ -39,16 +39,15 @@ app.use(express.urlencoded({ extended: false }));
     store: sessionStore,
   }));
   app.use(morgan('dev', { stream: logger.stream }));
+  app.use(passport.initialize());
+  app.use(passport.session());
   app.use('/api/v1.0/movies', moviesRouter);
-  app.use('/api/v1.0/login', loginRouter);
+  app.use('/api/v1.0/auth', authRouter);
   app.use('/api/v1.0/users', usersRouter);
   app.use('/api/v1.0/sign-up', signUpRouter);
 
   app.use(middleware.unknownEndpoint);
   app.use(middleware.errorHandler);
-
-  app.use(passport.initialize());
-  app.use(passport.session());
 }());
 
 module.exports = app;

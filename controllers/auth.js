@@ -1,9 +1,9 @@
-const loginRouter = require('express').Router();
+const authRouter = require('express').Router();
 const passport = require('passport');
 const { body, validationResult } = require('express-validator');
 
-loginRouter.post(
-  '/',
+authRouter.post(
+  '/login',
   body('username')
     .custom((value) => !/\s/.test(value))
     .withMessage('No spaces are allowed in the username')
@@ -45,16 +45,31 @@ loginRouter.post(
   },
 );
 
-loginRouter.get('/', (req, res, next) => {
-  if (req.session.hasOwnProperty('messages')) {
-    console.log(req.session.messages[req.session.messages.length - 1]);
-  }
-  const form = '<h1>Login Page</h1><form method="POST" action="/api/v1.0/login">\
-    Enter Username:<br><input type="text" name="username">\
-    <br>Enter Password:<br><input type="password" name="password">\
-    <br><br><input type="submit" value="Submit"></form>';
-
-  res.send(form);
+// Visiting this route logs the user out
+authRouter.post('/logout', (req, res, next) => {
+  req.logout((error) => {
+    if (error) { return next(error); }
+    res.status(200).json({
+      currentSession: {
+        isAuth: req.isAuthenticated?.() || false,
+        userId: req.user?._id || null,
+      },
+    });
+  });
 });
 
-module.exports = loginRouter;
+// Check status auth session
+authRouter.get('/status', (req, res, next) => {
+  try {
+    res.json({
+      currentSession: {
+        isAuth: req.isAuthenticated?.() || false,
+        userId: req.user?._id || null,
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
+module.exports = authRouter;

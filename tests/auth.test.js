@@ -4,7 +4,7 @@ const app = require('./app-helper');
 const { dbDisconnect, initializeMongoServer } = require('./mongo-config-testing');
 const { addInitialUsers, initialUsers } = require('./users-helper-db');
 const User = require('../models/user');
-const loginRouter = require('../controllers/login');
+const authRouter = require('../controllers/auth');
 const passport = require('../utils/passport');
 
 beforeAll(async () => {
@@ -20,7 +20,7 @@ beforeAll(async () => {
     store: sessionStore,
   }));
 
-  app.use('/api/v1.0/login', loginRouter);
+  app.use('/api/v1.0/auth', authRouter);
   app.use(passport.initialize());
   app.use(passport.session());
 });
@@ -33,7 +33,7 @@ describe('when there is initially some users saved in db', () => {
 
   it('succeeds with valid data', async () => {
     const res = await api
-      .post('/api/v1.0/login')
+      .post('/api/v1.0/auth/login')
       .send({
         username: initialUsers[0].username,
         password: initialUsers[0].username, // The password is the same that username
@@ -47,7 +47,7 @@ describe('when there is initially some users saved in db', () => {
 
   it('fails with status 400 and errors prop with errors if data is invalid', async () => {
     const res = await api
-      .post('/api/v1.0/login')
+      .post('/api/v1.0/auth/login')
       .send({
         username: initialUsers[0].username,
         password: 'Invalid password with withespaces', // The password is the same that username
@@ -61,7 +61,7 @@ describe('when there is initially some users saved in db', () => {
 
   it('fails with status 401 if username or password are wrong', async () => {
     await api
-      .post('/api/v1.0/login')
+      .post('/api/v1.0/auth/login')
       .send({
         username: initialUsers[0].username,
         password: 'wrongPassword', // The password must be the same that username

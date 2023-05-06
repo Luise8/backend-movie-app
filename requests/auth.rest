@@ -1,5 +1,5 @@
 ### SUCCEDS LOGIN
-POST http://localhost:3003/api/v1.0/login 
+POST http://localhost:3003/api/v1.0/auth/login 
 Content-Type: application/json
 
 {
@@ -8,7 +8,7 @@ Content-Type: application/json
 }
 
 ### SUCCEDS LOGIN AOTHER USER
-POST http://localhost:3003/api/v1.0/login 
+POST http://localhost:3003/api/v1.0/auth/login 
 Content-Type: application/json
 
 {
@@ -18,7 +18,7 @@ Content-Type: application/json
 }
 
 ### WRONG LOGIN
-POST http://localhost:3003/api/v1.0/login 
+POST http://localhost:3003/api/v1.0/auth/login 
 Content-Type: application/json
 
 {
@@ -28,7 +28,7 @@ Content-Type: application/json
 }
 
 ### WRONG LOGIN
-POST http://localhost:3003/api/v1.0/login 
+POST http://localhost:3003/api/v1.0/auth/login 
 Content-Type: application/json
 
 {
