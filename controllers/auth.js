@@ -47,15 +47,28 @@ authRouter.post(
 
 // Visiting this route logs the user out
 authRouter.post('/logout', (req, res, next) => {
-  req.logout((error) => {
-    if (error) { return next(error); }
-    res.status(200).json({
-      currentSession: {
-        isAuth: req.isAuthenticated?.() || false,
-        userId: req.user?._id || null,
-      },
+  try {
+    if (!req.hasOwnProperty('logout')) {
+      return res.status(200).json({
+        currentSession: {
+          isAuth: false,
+          userId: null,
+        },
+      });
+    }
+
+    req.logout((error) => {
+      if (error) { return next(error); }
+      res.status(200).json({
+        currentSession: {
+          isAuth: req.isAuthenticated?.() || false,
+          userId: req.user?._id || null,
+        },
+      });
     });
-  });
+  } catch (error) {
+    next(error);
+  }
 });
 
 // Check status auth session
