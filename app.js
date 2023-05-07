@@ -3,6 +3,7 @@ const morgan = require('morgan');
 const mongoose = require('mongoose');
 const session = require('express-session');
 const MongoStore = require('connect-mongo');
+const cors = require('cors');
 const config = require('./utils/config');
 const { logger } = require('./utils/logger');
 const middleware = require('./utils/middleware');
@@ -26,6 +27,12 @@ const app = express();
     .catch((error) => {
       logger.info('error connecting to MongoDB:', error.message);
     });
+
+  const corsOptions = {
+    origin: [process.env.ORIGIN_FRONTEND],
+    credentials: true, // access-control-allow-credentials:true
+  };
+  app.use(cors(corsOptions));
   app.use(express.json());
   app.use(express.urlencoded({ extended: false }));
   app.use(session({
