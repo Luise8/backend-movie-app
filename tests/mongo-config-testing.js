@@ -1,6 +1,8 @@
 // mongo-config-testing.js
 const mongoose = require('mongoose');
 const { MongoMemoryServer } = require('mongodb-memory-server-core');
+const MongoStore = require('connect-mongo');
+
 
 let mongoServer;
 exports.initializeMongoServer = async () => {
@@ -19,8 +21,12 @@ exports.initializeMongoServer = async () => {
   mongoose.connection.once('open', () => {
     console.log(`MongoDB successfully connected to ${mongoUri}`);
   });
-
-  await mongoose.connect(`${mongoUri}`);
+  let sessionStore;
+  await mongoose.connect(`${mongoUri}`).then((res) => {
+    const { client } = res.connection;
+    sessionStore = MongoStore.create({ client });
+  });
+  return sessionStore;
 };
 
 exports.dbDisconnect = async () => {
