@@ -26,6 +26,7 @@ async function main() {
   await addInitialMovies();
   await addInitialReviews();
   await addInitialLists();
+  await addInitialWatchlists();
   console.log('Debug: Closing mongoose');
   mongoose.connection.close();
 }
@@ -281,6 +282,7 @@ async function addInitialReviews() {
   console.log('Added reviews');
 }
 
+// LISTS 4
 const fourlistIds = [
   '64502ae06dc338b6e80b8c55',
   '64502ae06dc338b6e80b8c56',
@@ -331,6 +333,7 @@ function createFourLists() {
   });
   return lists;
 }
+
 const initialLists = createFourLists();
 async function addInitialLists() {
   await List.deleteMany({});
@@ -344,7 +347,55 @@ async function addInitialLists() {
   await Promise.all(promiseArray.concat(listUsersObjects));
 }
 
-// 13
+// wATCHLISTS 13
+function createThirteenWatchlists() {
+  const watchlists = [];
+  for (let i = 0; i < initialUsers.length; i += 1) {
+    if (i < 4) {
+      watchlists.push(
+        {
+          _id: initialUsers[i].watchlist,
+          userId: initialUsers[i]._id,
+          movies: [
+            initialMovies[randomInteger(
+              0,
+              initialMovies.length - 1,
+            )]._id,
+            initialMovies[randomInteger(
+              0,
+              initialMovies.length - 1,
+            )]._id,
+            initialMovies[randomInteger(
+              0,
+              initialMovies.length - 1,
+            )]._id,
+          ],
+        },
+      );
+      // empty watchlists
+    } else {
+      watchlists.push(
+        {
+          _id: initialUsers[i].watchlist,
+          userId: initialUsers[i]._id,
+          movies: [],
+        },
+      );
+    }
+  }
+
+  return watchlists;
+}
+
+const initialWatchlists = createThirteenWatchlists();
+async function addInitialWatchlists() {
+  await Watchlist.deleteMany({});
+  const watchlistObjects = initialWatchlists.map((watchlist) => new Watchlist(watchlist));
+  const promiseArray = watchlistObjects.map((watchlist) => watchlist.save());
+  await Promise.all(promiseArray);
+}
+
+// Other free ids
 const otherFreeObjectIds = [
   '64502ae06dc338b6e80b8c59',
   '64502ae06dc338b6e80b8c5a',
