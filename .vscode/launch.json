@@ -1,0 +1,19 @@
+{
+    "configurations": [
+
+
+        {
+            "type": "node-terminal",
+            "name": "Ejecutar test de auth",
+            "request": "launch",
+            "command": "npm run test -- --testTimeout=100000000 auth.test.js",
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "node-terminal",
+            "name": "Terminal de depuración de JavaScript",
+            "request": "launch",
+            "cwd": "${workspaceFolder}"
+        }
+    ]
+}
