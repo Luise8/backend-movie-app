@@ -1,8 +1,11 @@
 require('dotenv').config();
 const bcrypt = require('bcrypt');
+const mongoose = require('mongoose');
 const Movie = require('./models/movie');
 const Review = require('./models/review');
 const User = require('./models/user');
+const List = require('./models/list');
+const Watchlist = require('./models/watchlist');
 
 console.log(
   'This script populates some test movies, users, reviews, rates, lists and watchlists to your database. Specified database URI below variable. To run just: node populatedb',
@@ -10,7 +13,6 @@ console.log(
 
 'e.g.: mongodb+srv://<user>:<password>@cluster.44q9kcx.mongodb.net/database_name?retryWrites=true&w=majority';
 const URI = process.env.DEV_MONGODB_URI;
-const mongoose = require('mongoose');
 
 mongoose.set('strictQuery', false); // Prepare for Mongoose 7
 
@@ -23,6 +25,7 @@ async function main() {
   await addInitialUsers();
   await addInitialMovies();
   await addInitialReviews();
+  await addInitialLists();
   console.log('Debug: Closing mongoose');
   mongoose.connection.close();
 }
@@ -278,12 +281,71 @@ async function addInitialReviews() {
   console.log('Added reviews');
 }
 
-// 13
-const otherFreeObjectIds = [
+const fourlistIds = [
   '64502ae06dc338b6e80b8c55',
   '64502ae06dc338b6e80b8c56',
   '64502ae06dc338b6e80b8c57',
   '64502ae06dc338b6e80b8c58',
+];
+
+function randomInteger(min, max) {
+  return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+
+function createFourLists() {
+  const lists = [];
+  for (let i = 0; i < 3; i += 1) {
+    lists.push(
+      {
+        _id: fourlistIds[i],
+        name: `List number ${i}`,
+        description: `This is the description of list number ${i}made by the ${initialUsers[i].username} `,
+        date: new Date().toISOString(),
+        userId: initialUsers[i]._id,
+        movies: [
+          initialMovies[randomInteger(
+            0,
+            initialMovies.length - 1,
+          )]._id,
+          initialMovies[randomInteger(
+            0,
+            initialMovies.length - 1,
+          )]._id,
+          initialMovies[randomInteger(
+            0,
+            initialMovies.length - 1,
+          )]._id,
+        ],
+      },
+    );
+  }
+
+  // Add empty list to initialUsers[0]
+  lists.push({
+    _id: fourlistIds[fourlistIds.length - 1],
+    name: `List number ${fourlistIds.length - 1}`,
+    description: `This is the description of list number ${fourlistIds.length - 1} made by the ${initialUsers[0].username} `,
+    date: new Date().toISOString(),
+    userId: initialUsers[0]._id,
+    movies: [],
+  });
+  return lists;
+}
+const initialLists = createFourLists();
+async function addInitialLists() {
+  await List.deleteMany({});
+  const listObjects = initialLists.map((list) => new List(list));
+  const promiseArray = listObjects.map((list) => list.save());
+  const listUsersObjects = initialLists.map(async (list, i) => {
+    const user = await User.findById(list.userId);
+    user.lists.push(list);
+    return user.save();
+  });
+  await Promise.all(promiseArray.concat(listUsersObjects));
+}
+
+// 13
+const otherFreeObjectIds = [
   '64502ae06dc338b6e80b8c59',
   '64502ae06dc338b6e80b8c5a',
   '64502ae06dc338b6e80b8c5b',
