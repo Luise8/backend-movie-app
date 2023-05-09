@@ -5,11 +5,12 @@ const listSchema = new mongoose.Schema({
     type: String, required: true, minlength: 12, maxlength: 175,
   },
   description: { type: String, maxlength: 300 },
-  date: { type: Date, required: true },
+  date: { type: Date, required: true, immutable: true },
   userId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
     required: true,
+    immutable: true,
   },
   movies: [{
     type: mongoose.Schema.Types.ObjectId,

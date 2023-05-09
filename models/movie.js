@@ -6,16 +6,20 @@ const movieSchema = new mongoose.Schema({
     required: true,
     minlength: 2,
     maxlength: 213,
+    immutable: true,
   },
-  photo: { type: String, maxlength: 300 },
-  description: { type: String, required: true, maxlength: 1000 },
-  date: { type: Date, required: true },
+  photo: { type: String, maxlength: 300, immutable: true },
+  description: {
+    type: String, required: true, maxlength: 1000, immutable: true,
+  },
+  date: { type: Date, required: true, immutable: true },
   release_date: {
     type: String,
     maxlength: 10,
+    immutable: true,
   },
   idTMDB: {
-    type: String, required: true, minlength: 1, maxlength: 20,
+    type: String, required: true, minlength: 1, maxlength: 20, immutable: true,
   },
   rateCount: {
     type: Number, default: 0,

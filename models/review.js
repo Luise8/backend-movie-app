@@ -7,16 +7,18 @@ const reviewSchema = new mongoose.Schema({
   body: {
     type: String, required: true, minlength: 400, maxlength: 10000,
   },
-  date: { type: Date, required: true },
+  date: { type: Date, required: true, immutable: true },
   userId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
     required: true,
+    immutable: true,
   },
   movieId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Movie',
     required: true,
+    immutable: true,
   },
 });
 

@@ -17,6 +17,7 @@ const userSchema = mongoose.Schema({
   date: {
     type: Date,
     required: true,
+    immutable: true,
   },
   passwordHash: String,
   lists: [
@@ -30,6 +31,7 @@ const userSchema = mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Watchlist',
     required: true,
+    immutable: true,
   },
 });
 
