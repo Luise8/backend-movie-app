@@ -9,7 +9,12 @@ const userSchema = mongoose.Schema({
     minlength: 5,
     maxlength: 20,
   },
-  photo: { type: String, maxlength: 300 },
+  photo: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'ProfilePhoto',
+    required: true,
+    immutable: true,
+  },
   bio: {
     type: String,
     maxlength: 300,
