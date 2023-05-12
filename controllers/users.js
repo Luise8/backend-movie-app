@@ -5,6 +5,7 @@ const { body, validationResult } = require('express-validator');
 const User = require('../models/user');
 const List = require('../models/list');
 const Watchlist = require('../models/watchlist');
+const ProfilePhoto = require('../models/profilePhoto');
 
 usersRouter.post(
   '/',
@@ -47,9 +48,13 @@ usersRouter.post(
               passwordHash: hashedPassword,
               date: new Date(),
               watchlist: new mongoose.Types.ObjectId(),
-              photo: '',
+              photo: new mongoose.Types.ObjectId(),
               bio: '',
             });
+            const photoUser = new ProfilePhoto({
+              _id: user.photo,
+            });
+            await photoUser.save();
             const savedUser = await user.save();
             response.status(201).json(savedUser);
           } catch (err) {
@@ -67,9 +72,13 @@ usersRouter.get('/:id', async (request, response, next) => {
   try {
     const user = await User.findById(request.params.id).populate('lists', {
       name: 1,
-    });
+    }).populate('photo', { image: 1 }).lean()
+      .exec();
     if (user) {
-      response.json(user);
+      response.json({
+        ...user,
+        photo: user.photo.hasOwnProperty('image') ? `data:${user.photo.image.contentType};base64,${user.photo.image.data.toString('base64')}` : null,
+      });
     } else {
       response.status(404).end();
     }
