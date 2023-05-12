@@ -6,6 +6,7 @@ const Review = require('./models/review');
 const User = require('./models/user');
 const List = require('./models/list');
 const Watchlist = require('./models/watchlist');
+const ProfilePhoto = require('./models/profilePhoto');
 
 console.log(
   'This script populates some test movies, users, reviews, rates, lists and watchlists to your database. Specified database URI below variable. To run just: node populatedb',
@@ -23,6 +24,7 @@ async function main() {
   await mongoose.connect(URI);
   console.log('Debug: Should be connected?');
   await addInitialUsers();
+  await addInitialProfilePhotos();
   await addInitialMovies();
   await addInitialReviews();
   await addInitialLists();
@@ -54,7 +56,7 @@ function createThirteenUsers() {
       {
         _id: thirteenUsersId[i],
         username: `userNumber${i}`,
-        photo: '',
+        photo: new mongoose.Types.ObjectId().toString(),
         bio: '',
         date: new Date().toISOString(),
         passwordHash: bcrypt.hashSync(`userNumber${i}`, Number(process.env.saltRounds)),
@@ -74,6 +76,16 @@ async function addInitialUsers() {
   const promiseArray = userObjects.map((user) => user.save());
   await Promise.all(promiseArray);
   console.log('Added users');
+}
+async function addInitialProfilePhotos() {
+  await ProfilePhoto.deleteMany({});
+
+  const profilePhotoObjects = initialUsers.map((user) => new ProfilePhoto({
+    _id: user.photo,
+  }));
+  const promiseArray = profilePhotoObjects.map((profilePhoto) => profilePhoto.save());
+  await Promise.all(promiseArray);
+  console.log('Added ProfilePhotos');
 }
 
 // MOVIES 16
