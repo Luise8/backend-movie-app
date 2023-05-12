@@ -33,3 +33,9 @@ Content-Type: application/json
       "username": "Pet",
       "password": "password2"
 }
+
+###    // GET USER
+GET http://localhost:3003/api/v1.0/users/64501354c41b5db06e01c5ae HTTP/1.1
+###    // GET USER
+GET http://localhost:3003/api/v1.0/users/64501354c41b5db06e01c5af HTTP/1.1
+
