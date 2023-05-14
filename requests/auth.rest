@@ -3,6 +3,15 @@ POST http://localhost:3003/api/v1.0/auth/login
 Content-Type: application/json
 
 {
+  "username": "userNumber0",
+  "password": "userNumber0"
+}
+
+### SUCCEDS LOGIN
+POST http://localhost:3003/api/v1.0/auth/login 
+Content-Type: application/json
+
+{
   "username": "userNumber1",
   "password": "userNumber1"
 }

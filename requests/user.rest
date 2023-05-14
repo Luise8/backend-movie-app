@@ -34,8 +34,198 @@ Content-Type: application/json
       "password": "password2"
 }
 
-###    // GET USER
+###    // GET USER USERNUMBER0
+GET http://localhost:3003/api/v1.0/users/64501354c41b5db06e01c5a4 HTTP/1.1
+
+###    // GET USER USERNUMBER10
 GET http://localhost:3003/api/v1.0/users/64501354c41b5db06e01c5ae HTTP/1.1
-###    // GET USER
+
+###    // GET USER USERNUMBER11
 GET http://localhost:3003/api/v1.0/users/64501354c41b5db06e01c5af HTTP/1.1
 
+###    // GET USER USERNUMBER1
+GET http://localhost:3003/api/v1.0/users/64501354c41b5db06e01c5a5 HTTP/1.1
+
+
+# EDIT USERS WITH USERNUMBER0
+###    // EDIT USER VALID FILE
+PUT http://localhost:3003/api/v1.0/users/64501354c41b5db06e01c5a4 HTTP/1.1
+Content-Type: multipart/form-data; boundary=----boundary
+
+------boundary
+Content-Disposition: form-data; name="username"
+
+userNumber1Change1
+------boundary
+Content-Disposition: form-data; name="password"
+
+passwordChanged
+------boundary
+Content-Disposition: form-data; name="bio"
+
+Bio of the user 0     remove unnecessary spaces
+------boundary
+Content-Disposition: form-data; name="photo"; filename="2.jpg"
+Content-Type: image/jpg
+
+< ./2.jpg
+------boundary--
+
+
+###    // EDIT USER VALID WWITHOUT FILE
+PUT http://localhost:3003/api/v1.0/users/64501354c41b5db06e01c5a4 HTTP/1.1
+Content-Type: multipart/form-data; boundary=----boundary
+
+------boundary
+Content-Disposition: form-data; name="username"
+
+userNumber0Change2
+------boundary
+Content-Disposition: form-data; name="password"
+
+passwordChanged2
+------boundary
+Content-Disposition: form-data; name="bio"
+
+Bio of the user 0     remove unnecessary spaces
+------boundary--
+
+
+###    // EDIT USER WRONG - MISSING FIELD BIO
+PUT http://localhost:3003/api/v1.0/users/64501354c41b5db06e01c5a4 HTTP/1.1
+Content-Type: multipart/form-data; boundary=----boundary
+
+------boundary
+Content-Disposition: form-data; name="username"
+
+userNumber0Change3
+------boundary
+Content-Disposition: form-data; name="password"
+
+passwordChanged
+------boundary
+Content-Disposition: form-data; name="photo"; filename="1.jpg"
+Content-Type: image/jpg
+
+< ./1.jpg
+------boundary--
+
+
+###    // EDIT USER WRONG - USERNAME TAKEN
+PUT http://localhost:3003/api/v1.0/users/64501354c41b5db06e01c5a4 HTTP/1.1
+Content-Type: multipart/form-data; boundary=----boundary
+
+------boundary
+Content-Disposition: form-data; name="username"
+
+userNumber1
+------boundary
+Content-Disposition: form-data; name="password"
+
+passwordChanged
+------boundary
+Content-Disposition: form-data; name="bio"
+
+Bio of the user 0     remove unnecessary spaces
+------boundary
+Content-Disposition: form-data; name="photo"; filename="1.jpg"
+Content-Type: image/jpg
+
+< ./1.jpg
+------boundary--
+
+
+###    // EDIT USER WRONG - FILE TOO BIG > 1MB
+PUT http://localhost:3003/api/v1.0/users/64501354c41b5db06e01c5a4 HTTP/1.1
+Content-Type: multipart/form-data; boundary=----boundary
+
+------boundary
+Content-Disposition: form-data; name="username"
+
+userNumber0Change3
+------boundary
+Content-Disposition: form-data; name="password"
+
+passwordChanged
+------boundary
+Content-Disposition: form-data; name="bio"
+
+Bio of the user 0     remove unnecessary spaces
+------boundary
+Content-Disposition: form-data; name="photo"; filename="3.jpg"
+Content-Type: image/jpg
+
+< ./3.jpg
+------boundary--
+
+
+###    // EDIT USER WRONG FILE EXTENSION
+PUT http://localhost:3003/api/v1.0/users/64501354c41b5db06e01c5a4 HTTP/1.1
+Content-Type: multipart/form-data; boundary=----boundary
+
+------boundary
+Content-Disposition: form-data; name="username"
+
+userNumber0Change4
+------boundary
+Content-Disposition: form-data; name="password"
+
+passwordChanged
+------boundary
+Content-Disposition: form-data; name="bio"
+
+Bio of the user 0     remove unnecessary spaces
+------boundary
+Content-Disposition: form-data; name="photo"; filename="4.svg"
+Content-Type: image/jpg
+
+< ./4.svg
+------boundary--
+
+
+###    // EDIT USER WRONG FILE TYPE - PDF WITH EXTENSION OF VALID TYPE
+PUT http://localhost:3003/api/v1.0/users/64501354c41b5db06e01c5a4 HTTP/1.1
+Content-Type: multipart/form-data; boundary=----boundary
+
+------boundary
+Content-Disposition: form-data; name="username"
+
+userNumber0Change5
+------boundary
+Content-Disposition: form-data; name="password"
+
+passwordChanged
+------boundary
+Content-Disposition: form-data; name="bio"
+
+Bio of the user 0     remove unnecessary spaces
+------boundary
+Content-Disposition: form-data; name="photo"; filename="5.png"
+Content-Type: image/jpg
+
+< ./5.png
+------boundary--
+
+
+###    // EDIT USER INVALID FILE
+PUT http://localhost:3003/api/v1.0/users/64501354c41b5db06e01c5a4 HTTP/1.1
+Content-Type: multipart/form-data; boundary=----boundary
+
+------boundary
+Content-Disposition: form-data; name="username"
+
+userNumber0Change6
+------boundary
+Content-Disposition: form-data; name="password"
+
+passwordChanged
+------boundary
+Content-Disposition: form-data; name="bio"
+
+Bio of the user 0     remove unnecessary spaces
+------boundary
+Content-Disposition: form-data; name="photo"; filename="1.jpg"
+Content-Type: image/jpg
+
+< ./.jpg
+------boundary--
