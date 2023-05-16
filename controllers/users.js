@@ -95,16 +95,16 @@ usersRouter.get('/:id', async (request, response, next) => {
   try {
     const user = await User.findById(request.params.id).populate('lists', {
       name: 1,
-    }).populate('photo', { image: 1 }).lean()
+    })
+      .populate('photo', { image: 1 })
+      .lean()
       .exec();
     if (user) {
-      if (request.user?.id.toString() !== user._id.toString()) {
+      if (request.user?.id !== user.id) {
         user.watchlist = null;
       }
-      response.json({
-        ...user,
-        photo: user.photo.hasOwnProperty('image') ? `data:${user.photo.image.contentType};base64,${user.photo.image.data.toString('base64')}` : null,
-      });
+      user.photo = user.photo.hasOwnProperty('image') ? `data:${user.photo.image.contentType};base64,${user.photo.image.data.toString('base64')}` : null;
+      response.json(user);
     } else {
       response.status(404).end();
     }

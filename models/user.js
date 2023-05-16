@@ -52,6 +52,38 @@ userSchema.set('toJSON', {
   },
 });
 
+userSchema.post(['find', 'findOne', 'findOneAndUpdate'], function (res) {
+  if (!this.mongooseOptions().lean) {
+    return;
+  }
+  if (Array.isArray(res)) {
+    res.forEach(transformDoc);
+    return;
+  }
+  transformDoc(res);
+});
+
+function transformDoc(doc) {
+  if (doc._id != null) {
+    doc.id = doc._id.toString();
+    delete doc._id;
+  }
+  delete doc.__v;
+  delete doc.passwordHash;
+
+  for (const key of Object.keys(doc)) {
+    if (doc[key] !== null && doc[key].constructor.name === 'Object') {
+      transformDoc(doc[key]);
+    } else if (Array.isArray(doc[key])) {
+      for (const el of doc[key]) {
+        if (el != null && el.constructor.name === 'Object') {
+          transformDoc(el);
+        }
+      }
+    }
+  }
+}
+
 const User = mongoose.model('User', userSchema);
 
 module.exports = User;
