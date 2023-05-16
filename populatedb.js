@@ -7,6 +7,7 @@ const User = require('./models/user');
 const List = require('./models/list');
 const Watchlist = require('./models/watchlist');
 const ProfilePhoto = require('./models/profilePhoto');
+const Rate = require('./models/rate');
 
 console.log(
   'This script populates some test movies, users, reviews, rates, lists and watchlists to your database. Specified database URI below variable. To run just: node populatedb',
@@ -29,6 +30,7 @@ async function main() {
   await addInitialReviews();
   await addInitialLists();
   await addInitialWatchlists();
+  await addInitialRates();
   console.log('Debug: Closing mongoose');
   mongoose.connection.close();
 }
@@ -278,7 +280,7 @@ const initialReviews = [
   },
   // Second user initialUsers[1] review of movie initialMovies[0]
   {
-    title: 'Second review made',
+    title: 'Third review made',
     body: 'Lorem ipsum dolor sit amet, consectetuer adipiscing entum semper nisi. Aenean vulputate eleifend tellus. Aenean leo ligula, porttitor eu, consequat vitaLorem ipsum dolor sit amet, consectetuer adipiscing entum semper nisi. Aenean vulputate eleifend tellus. Aenean leo ligula, porttitor eu, consequat vitaLorem ipsum dolor sit amet, consectetuer adipiscing entum semper nisi. Aenean vulputate eleifend tellus. Aenean leo ligula, porttitor eu, consequat vitaLorem ipsum dolor sit amet, consectetuer adipiscing entum semper nisi. Aenean vulputate eleifend tellus. Aenean leo ligula, porttitor eu, consequat vitaLorem ipsum dolor sit amet, consectetuer adipiscing entum semper nisi. Aenean vulputate eleifend tellus. Aenean leo ligula, porttitor eu, consequat vita',
     date: new Date(),
     userId: initialUsers[1],
@@ -405,13 +407,71 @@ async function addInitialWatchlists() {
   const watchlistObjects = initialWatchlists.map((watchlist) => new Watchlist(watchlist));
   const promiseArray = watchlistObjects.map((watchlist) => watchlist.save());
   await Promise.all(promiseArray);
+  console.log('Added profilePhotos');
+}
+
+const threeRates = [
+  '64502ae06dc338b6e80b8c59',
+  '64502ae06dc338b6e80b8c5a',
+  '64502ae06dc338b6e80b8c5b',
+];
+function createThreeRates() {
+  const rates = [];
+  for (let i = 0; i < threeRates.length; i += 1) {
+    let userId = initialUsers[i]._id;
+    if (i > 0) {
+      userId = initialUsers[1]._id;
+    }
+    let movieId = initialMovies[0]._id;
+    if (i === 2) {
+      movieId = initialMovies[1]._id;
+    }
+
+    rates.push({
+      _id: threeRates[i],
+      movieId,
+      userId,
+      date: new Date().toISOString(),
+      value: 5,
+    });
+  }
+  return rates;
+}
+const initialRates = createThreeRates();
+async function addInitialRates() {
+  await Rate.deleteMany({});
+  const ratetObjects = initialRates.map((rate) => new Rate(rate));
+  const ratesPromise = ratetObjects.map((rate) => rate.save());
+  /*   const moviesToChange = initialRates.map(async (rate, i) => {
+    const movieToChange = await Movie.findById(rate.movieId);
+    movieToChange.rateCount += 1;
+    movieToChange.rateValue += rate.value;
+    movieToChange.rateAverage = Math.round(movieToChange.rateValue / movieToChange.rateCount);
+    return movieToChange.save()
+  }); */
+
+  const moviesToChange = initialRates.filter((rate, index, array) => index === array
+    .findIndex((other) => other.i === rate.i)).map((rate) => rate.movieId);
+
+  const moviesPromise = moviesToChange.map(async (movieId) => {
+    const ratesCurrentMovie = initialRates.filter((rate) => rate.movieId === movieId);
+
+    const movieToChange = await Movie.findById(movieId);
+    for (let i = 0; i < ratesCurrentMovie.length; i += 1) {
+      movieToChange.rateCount += 1;
+      movieToChange.rateValue += ratesCurrentMovie[i].value;
+      movieToChange.rateAverage = Math.round(movieToChange.rateValue / movieToChange.rateCount);
+    }
+
+    return movieToChange.save();
+  });
+
+  await Promise.all(ratesPromise.concat(moviesPromise));
+  console.log('Added rates');
 }
 
 // Other free ids
 const otherFreeObjectIds = [
-  '64502ae06dc338b6e80b8c59',
-  '64502ae06dc338b6e80b8c5a',
-  '64502ae06dc338b6e80b8c5b',
   '64502ae06dc338b6e80b8c5c',
   '64502ae06dc338b6e80b8c5d',
   '64502ae06dc338b6e80b8c5e',
