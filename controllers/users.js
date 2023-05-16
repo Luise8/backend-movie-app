@@ -5,7 +5,6 @@ const { body, validationResult } = require('express-validator');
 const multer = require('multer');
 const sharp = require('sharp');
 const { readFile, unlink } = require('node:fs/promises');
-const { Buffer } = require('node:buffer');
 const User = require('../models/user');
 const List = require('../models/list');
 const Watchlist = require('../models/watchlist');
@@ -109,12 +108,12 @@ usersRouter.get('/:id', async (request, response, next) => {
 
 usersRouter.put(
   '/:id',
+  isAuth,
   async (request, response, next) => {
     try {
       // Checks
       const { user } = request;
-      // First chaecks
-      if (!user) return response.status(401).json({ error: 'not logged in' });
+      // First checks
       const userDb = await User.findById(request.params.id);
       if (!userDb) return response.status(404).json({ error: 'user no found' });
       if (userDb._id.toString() !== user._id.toString()) return response.status(401).end();
