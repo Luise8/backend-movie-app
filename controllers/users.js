@@ -9,6 +9,10 @@ const User = require('../models/user');
 const List = require('../models/list');
 const Watchlist = require('../models/watchlist');
 const ProfilePhoto = require('../models/profilePhoto');
+const Review = require('../models/review');
+const Rate = require('../models/rate');
+const Movie = require('../models/movie');
+const { isAuth } = require('../utils/middleware');
 
 const upload = multer({
   dest: 'temp/uploads/',
@@ -265,4 +269,48 @@ usersRouter.put(
     }
   },
 );
+
+usersRouter.delete('/:id', isAuth, async (request, response, next) => {
+  const session = await mongoose.connection.startSession();
+  try {
+    const { user } = request;
+    const userDb = await User.findById(request.params.id);
+    // No exist
+    if (!userDb) return response.status(404).json({ error: 'user no found' });
+    // No owner of account
+    if (userDb._id.toString() !== user._id.toString()) return response.status(401).end();
+
+    // Start session
+    session.startTransaction();
+
+    await Review.deleteMany({ userId: userDb._id }).session(session);
+    await List.deleteMany({ userId: userDb._id }).session(session);
+    const rates = await Rate.find({ userId: userDb._id }).session(session);
+    if (rates.length > 0) {
+      const moviesPromiseToChange = rates.map(async (rate) => {
+        const movieToChange = await Movie.findById(rate.movieId).session(session);
+        movieToChange.rateCount -= 1;
+        movieToChange.rateValue -= rate.value;
+        movieToChange.rateAverage = Math
+          .round(movieToChange.rateValue / movieToChange.rateCount);
+        return movieToChange.save();
+      });
+      await Promise.all(moviesPromiseToChange);
+      await Rate.deleteMany({ userId: userDb._id }).session(session);
+    }
+    await Watchlist.findByIdAndDelete(userDb.watchlist).session(session);
+    await ProfilePhoto.findByIdAndDelete(userDb.photo).session(session);
+    await User.findByIdAndDelete(request.params.id).session(session);
+
+    // Confirm transaction
+    await session.commitTransaction();
+    session.endSession();
+    response.status(204).end();
+  } catch (error) {
+    await session.abortTransaction();
+    session.endSession();
+    return next(error);
+  }
+});
+
 module.exports = usersRouter;
