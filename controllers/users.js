@@ -98,6 +98,9 @@ usersRouter.get('/:id', async (request, response, next) => {
     }).populate('photo', { image: 1 }).lean()
       .exec();
     if (user) {
+      if (request.user?.id.toString() !== user._id.toString()) {
+        user.watchlist = null;
+      }
       response.json({
         ...user,
         photo: user.photo.hasOwnProperty('image') ? `data:${user.photo.image.contentType};base64,${user.photo.image.data.toString('base64')}` : null,
