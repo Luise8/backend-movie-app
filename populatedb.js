@@ -410,14 +410,14 @@ async function addInitialWatchlists() {
   console.log('Added profilePhotos');
 }
 
-const threeRates = [
+const threeRateIds = [
   '64502ae06dc338b6e80b8c59',
   '64502ae06dc338b6e80b8c5a',
   '64502ae06dc338b6e80b8c5b',
 ];
 function createThreeRates() {
   const rates = [];
-  for (let i = 0; i < threeRates.length; i += 1) {
+  for (let i = 0; i < threeRateIds.length; i += 1) {
     let userId = initialUsers[i]._id;
     if (i > 0) {
       userId = initialUsers[1]._id;
@@ -428,7 +428,7 @@ function createThreeRates() {
     }
 
     rates.push({
-      _id: threeRates[i],
+      _id: threeRateIds[i],
       movieId,
       userId,
       date: new Date().toISOString(),
@@ -442,13 +442,6 @@ async function addInitialRates() {
   await Rate.deleteMany({});
   const ratetObjects = initialRates.map((rate) => new Rate(rate));
   const ratesPromise = ratetObjects.map((rate) => rate.save());
-  /*   const moviesToChange = initialRates.map(async (rate, i) => {
-    const movieToChange = await Movie.findById(rate.movieId);
-    movieToChange.rateCount += 1;
-    movieToChange.rateValue += rate.value;
-    movieToChange.rateAverage = Math.round(movieToChange.rateValue / movieToChange.rateCount);
-    return movieToChange.save()
-  }); */
 
   const moviesToChange = initialRates.filter((rate, index, array) => index === array
     .findIndex((other) => other.i === rate.i)).map((rate) => rate.movieId);
