@@ -115,6 +115,29 @@ Content-Type: image/jpg
 ------boundary--
 
 
+###    // EDIT USER WRONG - DON'T PASS VALIDATION
+PUT http://localhost:3003/api/v1.0/users/64501354c41b5db06e01c5a4 HTTP/1.1
+Content-Type: multipart/form-data; boundary=----boundary
+
+------boundary
+Content-Disposition: form-data; name="username"
+
+u
+------boundary
+Content-Disposition: form-data; name="password"
+
+p
+------boundary
+Content-Disposition: form-data; name="bio"
+
+Bio of the user 0     remove unnecessary spaces
+------boundary
+Content-Disposition: form-data; name="photo"; filename="1.jpg"
+Content-Type: image/jpg
+
+< ./1.jpg
+------boundary--
+
 ###    // EDIT USER WRONG - USERNAME TAKEN
 PUT http://localhost:3003/api/v1.0/users/64501354c41b5db06e01c5a4 HTTP/1.1
 Content-Type: multipart/form-data; boundary=----boundary
