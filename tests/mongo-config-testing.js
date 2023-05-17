@@ -1,12 +1,16 @@
 // mongo-config-testing.js
 const mongoose = require('mongoose');
-const { MongoMemoryServer } = require('mongodb-memory-server-core');
+const { MongoMemoryReplSet } = require('mongodb-memory-server-core');
 const MongoStore = require('connect-mongo');
-
 
 let mongoServer;
 exports.initializeMongoServer = async () => {
-  mongoServer = await MongoMemoryServer.create();
+  // This will create an ReplSet with 1 member
+  mongoServer = await MongoMemoryReplSet.create({
+    replSet: {
+      count: 1,
+    },
+  });
   const mongoUri = mongoServer.getUri();
   console.log('🚀 ~ file: mongoConfigTesting.js:11 ~ exports.initializeMongoServer= ~ mongoUri:', mongoUri);
 
