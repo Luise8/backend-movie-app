@@ -5,6 +5,7 @@ const { body, validationResult } = require('express-validator');
 const multer = require('multer');
 const sharp = require('sharp');
 const { readFile, unlink } = require('node:fs/promises');
+const fileTypeCjs = require('file-type-cjs');
 const User = require('../models/user');
 const List = require('../models/list');
 const Watchlist = require('../models/watchlist');
@@ -224,10 +225,19 @@ usersRouter.put(
       // Handle last check of file
       if (request.hasOwnProperty('file')) {
         try {
-          const { fileTypeFromFile } = await import('file-type');
-          const { ext, mime } = await fileTypeFromFile(request.file.path);
+          // This is neccesary to can test with jest, es6 dynamic import throw errors
+          let resultFileType;
+          if (process.env.NODE_ENV === 'test') {
+            const file = await readFile(request.file.path);
+            resultFileType = await fileTypeCjs.fromBuffer(file);
+          } else {
+            console.log('maria');
+            const { fileTypeFromFile } = await import('file-type');
+            resultFileType = await fileTypeFromFile(request.file.path);
+          }
+
           const filetypes = /jpeg|jpg|png|gif/;
-          if (!filetypes.test(ext) || !filetypes.test(mime)) {
+          if (!filetypes.test(resultFileType.ext) || !filetypes.test(resultFileType.mime)) {
             await unlink(request.file.path);
             await session.abortTransaction();
             session.endSession();
