@@ -19,7 +19,7 @@ const errorHandler = (error, request, response, next) => {
 };
 
 const isAuth = (req, res, next) => {
-  if (req.isAuthenticated()) {
+  if (req.isAuthenticated?.()) {
     next();
   } else {
     res.status(401).json({ msg: 'You are not authorized to view this resource' });
@@ -28,4 +28,5 @@ const isAuth = (req, res, next) => {
 module.exports = {
   unknownEndpoint,
   errorHandler,
+  isAuth,
 };
