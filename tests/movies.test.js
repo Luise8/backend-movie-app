@@ -1,9 +1,23 @@
 const request = require('supertest');
 const app = require('./app-helper');
 const { dbDisconnect, initializeMongoServer } = require('./mongo-config-testing');
+
 const {
-  addInitialMovies, initialMovies, nonExistingId,
-} = require('./movies-initial-db');
+  initialUsers,
+  initialLists,
+  initialRates,
+  initialWatchlists,
+  initialMovies,
+  initialReviews,
+  addInitialUsers,
+  addInitialLists,
+  addInitialWatchlists,
+  addInitialRates,
+  addInitialProfilePhotos,
+  addInitialMovies,
+  addInitialReviews,
+  nonExistingId,
+} = require('./test-db-helper');
 const Movie = require('../models/movie');
 const moviesRouter = require('../controllers/movies');
 
@@ -79,7 +93,7 @@ describe('when there is initially some movies saved in db', () => {
     });
   });
 
-  it.only('the unique identifier property of the movies is named id', async () => {
+  it('the unique identifier property of the movies is named id', async () => {
     const response = await api.get('/api/v1.0/movies');
 
     expect(response.body.results[0].id).toBeDefined();

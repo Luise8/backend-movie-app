@@ -1,9 +1,14 @@
 const request = require('supertest');
 const app = require('./app-helper');
 const { dbDisconnect, initializeMongoServer } = require('./mongo-config-testing');
+
 const {
-  addInitialMovies, addInitialReviews, initialReviews, initialMovies, nonExistingId,
-} = require('./movies-initial-db');
+  initialMovies,
+  initialReviews,
+  addInitialMovies,
+  addInitialReviews,
+  nonExistingId,
+} = require('./test-db-helper');
 const Review = require('../models/review');
 const moviesRouter = require('../controllers/movies');
 
