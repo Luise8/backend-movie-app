@@ -187,10 +187,13 @@ usersRouter.put(
     .withMessage('No spaces are allowed in the password')
     .isLength({ min: 5 })
     .withMessage('Password must be specified with min 5 characters'),
-  (request, response, next) => {
+  async (request, response, next) => {
     try {
       const result = validationResult(request);
       if (!result.isEmpty()) {
+        if (request.hasOwnProperty('file')) {
+          await unlink(request.file.path);
+        }
         return response.status(400).json({ errors: result.array() });
       }
       return next();
