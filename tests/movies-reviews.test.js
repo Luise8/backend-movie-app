@@ -32,7 +32,7 @@ describe('when there is initially some movies and reviews saved in db', () => {
   it('the amount of all reviews of one movie is returned in the total property', async () => {
     const response = await api.get(`/api/v1.0/movies/${initialMovies[0].idTMDB}/reviews`);
 
-    // Reviews added to this movie. See movies-initial.js
+    // Reviews added to this movie.
     const amountReviews = initialReviews
       .filter((review) => review.movieId === initialMovies[0]._id).length;
     expect(response.body.total).toBe(amountReviews);
