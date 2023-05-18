@@ -395,7 +395,7 @@ describe('when there is initially some users saved in db', () => {
       expect(resUser.body).toMatchObject(resInitialUser.body);
     });
 
-    it('fails with status code 401 if the user is not the owner of the account', async () => {
+    it('fails with status code 401 if the user is not logged in', async () => {
       // Initial user data
       const resInitialUser = await api.get(`/api/v1.0/users/${initialUsers[0]._id}`);
 
