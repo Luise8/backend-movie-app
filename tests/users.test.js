@@ -405,6 +405,152 @@ describe('when there is initially some users saved in db', () => {
       expect(resUser.body).toMatchObject(resInitialUser.body);
     });
   });
+
+  describe('delete user', () => {
+    it('successful with return of status code 204 with user logged in who is the owner of the account', async () => {
+      // Login
+      await api
+        .post('/api/v1.0/auth/login')
+        .send({
+          username: initialUsers[0].username,
+          password: initialUsers[0].username, // The password is the same that username
+        });
+
+      // Initial data
+      // ProfilePhoto that will be delete from db
+      const photoUser = await ProfilePhoto.findById(
+        initialUsers[0].photo,
+      );
+
+      // Watchlist that will be delete from db
+      const watchlist = await Watchlist.findById(
+        initialUsers[0].watchlist,
+      );
+
+      expect(photoUser && watchlist).not.toBeNull();
+
+      // Reveiews that will be delete from db
+      const reviews = await Review.find({ userId: initialUsers[0]._id });
+
+      // Lists that will be delete from db
+      const lists = await List.find({ userId: initialUsers[0]._id });
+
+      // Rates that will be delete from db
+      const rates = await Rate.find({ userId: initialUsers[0]._id });
+
+      expect(reviews && lists && rates).not.toHaveLength(0);
+
+      // Delete user
+      await api
+        .delete(`/api/v1.0/users/${initialUsers[0]._id}`)
+        .expect(204);
+
+      // To check the data was update in db
+
+      // User not found
+      await api.get(`/api/v1.0/users/${initialUsers[0]._id}`).expect(404);
+
+      const users = await User.find().count();
+
+      // One user was removed
+      expect(users).toBe(initialUsers.length - 1);
+
+      // ProfilePhoto delete from db
+      const currentPhotoUser = await ProfilePhoto.findById(
+        initialUsers[0].photo,
+      );
+      expect(currentPhotoUser).toBeNull();
+
+      // Watchlist delete from db
+      const currentWatchlist = await Watchlist.findById(
+        initialUsers[0].watchlist,
+      );
+      expect(currentWatchlist).toBeNull();
+
+      // Reveiews delete from db
+      const currentReviews = await Review.find({ userId: initialUsers[0]._id });
+
+      expect(currentReviews).toHaveLength(0);
+
+      // Lists delete from db
+      const currentLists = await List.find({ userId: initialUsers[0]._id });
+      expect(currentLists).toHaveLength(0);
+
+      // Rates delete from db
+      const currentRates = await Rate.find({ userId: initialUsers[0]._id });
+      expect(currentRates).toHaveLength(0);
+
+      // Now the user is not logged in
+      await api.get('/api/v1.0/auth/status').expect({
+        currentSession: { isAuth: false, userId: null },
+      });
+    });
+
+    it('fails with status code 404 if the user does not exist', async () => {
+      const newUser = new User({
+        username: `userNumber${initialUsers.length}`,
+        bio: '',
+        date: new Date().toISOString(),
+        passwordHash: bcrypt.hashSync(`userNumber${initialUsers.length}`, Number(process.env.saltRounds)),
+        watchlist: new mongoose.Types.ObjectId().toString(),
+        photo: new mongoose.Types.ObjectId().toString(),
+      });
+
+      await newUser.save();
+      await newUser.deleteOne({});
+
+      // Login
+      await api
+        .post('/api/v1.0/auth/login')
+        .send({
+          username: initialUsers[1].username,
+          password: initialUsers[1].username, // The password is the same that username
+        });
+
+      // Trying to delete user
+      await api
+        .delete(`/api/v1.0/users/${newUser.id}`).expect(404);
+
+      const users = await User.find().count();
+
+      // No user was removed
+      expect(users).toBe(initialUsers.length);
+    });
+
+    it('fails with status code 401 if the user is not the owner of the account', async () => {
+      // Login
+      await api
+        .post('/api/v1.0/auth/login')
+        .send({
+          username: initialUsers[1].username,
+          password: initialUsers[1].username, // The password is the same that username
+        });
+
+      // Check not authorize user
+      await api
+        .delete(`/api/v1.0/users/${initialUsers[0]._id}`).expect(401);
+
+      const users = await User.find().count();
+
+      // No user was removed
+      expect(users).toBe(initialUsers.length);
+    });
+
+    it('fails with status code 401 if the user is not logged in', async () => {
+      // Check user not logged in
+      await api
+        .delete(`/api/v1.0/users/${initialUsers[0]._id}`)
+        .expect(401)
+        .expect({
+          msg: 'You are not authorized to view this resource',
+        });
+
+      const users = await User.find().count();
+
+      // No user was removed
+      expect(users).toBe(initialUsers.length);
+    });
+  });
 });
 
 afterAll(async () => {
