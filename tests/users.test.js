@@ -566,7 +566,7 @@ describe('when there is initially some users saved in db', () => {
       });
     });
   });
-  describe.only('users/reviews routes', () => {
+  describe('users/reviews routes', () => {
     beforeAll(async () => {
       await addInitialUsers();
       await addInitialProfilePhotos();
@@ -629,6 +629,76 @@ describe('when there is initially some users saved in db', () => {
       const page = 'one';
       const pageSize = -5;
       const response = await api.get(`/api/v1.0/users/${initialUsers[0]._id}/reviews/?page=${page}&pageSize=${pageSize}`).expect(400);
+
+      expect(response.body.errors).toBeDefined();
+      expect(response.body.errors.length).toBeGreaterThan(0);
+    });
+  });
+
+  describe('users/rates routes', () => {
+    beforeAll(async () => {
+      await addInitialUsers();
+      await addInitialProfilePhotos();
+      await addInitialLists();
+      await addInitialWatchlists();
+    });
+
+    it('rates are returned as json', async () => {
+      await api.get(`/api/v1.0/users/${initialUsers[0]._id}/rates`).expect(200).expect('Content-Type', /application\/json/);
+    });
+
+    it('the amount of all rates of one user is returned in the total property', async () => {
+      const response = await api.get(`/api/v1.0/users/${initialUsers[0]._id}/rates`);
+
+      console.log('🚀 ~ file: users.test.js:653 ~ it ~ response:', response.body);
+      // Reviews added by this user.
+      const amountRates = initialRates
+        .filter((rate) => rate.userId === initialUsers[0]._id).length;
+      expect(response.body.total).toBe(amountRates);
+    });
+
+    it('return the number of rates and data according to the result and query parameters page and pageSize', async () => {
+      const page = 1;
+      const pageSize = 1;
+
+      const initialResponse = await api.get(`/api/v1.0/users/${initialUsers[1]._id}/rates/?page=${0}&pageSize=${pageSize}`);
+
+      const secondResponse = await api.get(`/api/v1.0/users/${initialUsers[1]._id}/rates/?page=${page}&pageSize=${pageSize}`);
+
+      // To check each rate item is only in one response
+      //  according to query parameters page and pageSize
+      initialResponse.body.results.forEach((rateFirstResponse) => {
+        expect(secondResponse.body.results).not.toContainEqual(rateFirstResponse);
+      });
+      const {
+        _id, photo, watchlist, passwordHash, ...userSelected
+      } = initialUsers[1];
+      expect(secondResponse.body.results).toHaveLength(pageSize);
+      expect(secondResponse.body.page).toBe(page);
+      expect(secondResponse.body.prev_page).toContain(`page=${page - 1}`);
+      expect(secondResponse.body.next_page).toContain('');
+      expect(secondResponse.body.results[0]).toMatchObject({
+        date: expect.any(String),
+        value: expect.any(Number),
+      });
+      expect(secondResponse.body.results[0].movieId.photo).toBeDefined();
+      expect(secondResponse.body.results[0].movieId.name).toBeDefined();
+      expect(secondResponse.body.results[0].movieId.release_date).toBeDefined();
+      expect(secondResponse.body.results[0].movieId.idTMDB).toBeDefined();
+      expect(secondResponse.body.results[0].movieId.rateAverage).toBeDefined();
+      expect(secondResponse.body.results[0].movieId.description).toBeDefined();
+      expect(secondResponse.body.user_details).toEqual({
+        ...userSelected,
+        photo: null,
+        watchlist: null,
+        id: _id,
+      });
+    });
+
+    it('fails with statuscode 400 if the query parameters are invalid and return array with validator errors', async () => {
+      const page = 'one';
+      const pageSize = -5;
+      const response = await api.get(`/api/v1.0/users/${initialUsers[0]._id}/rates/?page=${page}&pageSize=${pageSize}`).expect(400);
 
       expect(response.body.errors).toBeDefined();
       expect(response.body.errors.length).toBeGreaterThan(0);

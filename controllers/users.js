@@ -427,26 +427,100 @@ usersRouter.get(
   },
 );
 
-usersRouter.get('/:id/rates', async (request, response, next) => {
-  try {
-    const user = await User.findById(request.params.id).populate('lists', {
-      name: 1,
-    })
-      .populate('photo', { image: 1 })
-      .lean()
-      .exec();
-    if (user) {
-      if (request.user?.id !== user.id) {
-        user.watchlist = null;
+usersRouter.get(
+  '/:id/rates',
+  // Sanitization and validation
+  query('page')
+    .optional()
+    .trim()
+    .custom((value) => !/\s/.test(value))
+    .withMessage('No spaces are allowed in page')
+    .custom((value) => /^\d+$/.test(value))
+    .withMessage('page has non-numeric characters.'),
+  query('pageSize')
+    .optional()
+    .trim()
+    .custom((value) => !/\s/.test(value))
+    .withMessage('No spaces are allowed in pageSize')
+    .custom((value) => /^\d+$/.test(value))
+    .withMessage('pageSize has non-numeric characters.')
+    .customSanitizer((value) => {
+      if (Number(value) > 30) {
+        return 30;
+      } if (Number(value) === 0) {
+        return 10;
       }
-      user.photo = user.photo.hasOwnProperty('image') ? `data:${user.photo.image.contentType};base64,${user.photo.image.data.toString('base64')}` : null;
-      response.json(user);
-    } else {
-      response.status(404).end();
+      return value;
+    }),
+  (req, res, next) => {
+    try {
+      const result = validationResult(req);
+      if (!result.isEmpty()) {
+        return res.status(400).json({ errors: result.array() });
+      }
+      return next();
+    } catch (error) {
+      return next(error);
     }
-  } catch (exception) {
-    next(exception);
-  }
-});
+  },
+  async (request, response, next) => {
+    try {
+      const user = await User.findById(request.params.id).populate('photo', { image: 1 })
+        .lean().exec();
+      if (user) {
+        if (request.user?.id !== user.id) {
+          user.watchlist = null;
+        }
+        user.photo = user.photo.hasOwnProperty('image') ? `data:${user.photo.image.contentType};base64,${user.photo.image.data.toString('base64')}` : null;
+
+        // Get page and pageSize values
+        const pageSize = Number(request.query.pageSize) || 10;
+        const page = Number(request.query.page) || 0;
+
+        // Get count of rates
+        const count = await Rate.find({
+          userId: request.params.id,
+        }).count();
+
+        // Get number of prev page
+        let prevPage;
+        if (page === 0) {
+          prevPage = '';
+        } else if ((pageSize * (page - 1)) > count) {
+          if (Number.isInteger(count / pageSize)) {
+            prevPage = (count / pageSize) - 1;
+          } else {
+            prevPage = parseInt(count / pageSize, 10);
+          }
+        } else {
+          prevPage = page - 1;
+        }
+
+        const rates = await Rate.find({
+          userId: request.params.id,
+        }).limit(pageSize)
+          .skip(pageSize * page).sort({ date: -1, rateAverage: -1, idTMDB: -1 })
+          .populate('movieId', {
+            name: 1, photo: 1, release_date: 1, idTMDB: 1, rateAverage: 1, description: 1,
+          })
+          .exec();
+
+        response.json({
+          user_details: user,
+          total: count,
+          page_size: pageSize,
+          page,
+          prev_page: page === 0 ? prevPage : `/movies?page=${prevPage}&page_size=${pageSize}`,
+          next_page: (pageSize * (page + 1)) < count ? `/movies?page=${page + 1}&page_size=${pageSize}` : '',
+          results: rates,
+        });
+      } else {
+        response.status(404).end();
+      }
+    } catch (exception) {
+      next(exception);
+    }
+  },
+);
 
 module.exports = usersRouter;
