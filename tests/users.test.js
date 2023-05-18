@@ -417,26 +417,28 @@ describe('when there is initially some users saved in db', () => {
         });
 
       // Initial data
-      // ProfilePhoto that will be delete from db
+      // ProfilePhoto that will be deleted from db
       const photoUser = await ProfilePhoto.findById(
         initialUsers[0].photo,
       );
 
-      // Watchlist that will be delete from db
+      // Watchlist that will be deleted from db
       const watchlist = await Watchlist.findById(
         initialUsers[0].watchlist,
       );
 
       expect(photoUser && watchlist).not.toBeNull();
 
-      // Reveiews that will be delete from db
+      // Reveiews that will be deleted from db
       const reviews = await Review.find({ userId: initialUsers[0]._id });
 
-      // Lists that will be delete from db
+      // Lists that will be deleted from db
       const lists = await List.find({ userId: initialUsers[0]._id });
 
-      // Rates that will be delete from db
-      const rates = await Rate.find({ userId: initialUsers[0]._id });
+      // Rates that will be deleted from db
+      const rates = await Rate.find({ userId: initialUsers[0]._id }).populate('movieId', {
+        rateValue: 1, rateAverage: 1, rateCount: 1,
+      });
 
       expect(reviews && lists && rates).not.toHaveLength(0);
 
@@ -445,7 +447,7 @@ describe('when there is initially some users saved in db', () => {
         .delete(`/api/v1.0/users/${initialUsers[0]._id}`)
         .expect(204);
 
-      // To check the data was update in db
+      // To check the data was updated in db
 
       // User not found
       await api.get(`/api/v1.0/users/${initialUsers[0]._id}`).expect(404);
@@ -455,31 +457,42 @@ describe('when there is initially some users saved in db', () => {
       // One user was removed
       expect(users).toBe(initialUsers.length - 1);
 
-      // ProfilePhoto delete from db
+      // ProfilePhoto deleted from db
       const currentPhotoUser = await ProfilePhoto.findById(
         initialUsers[0].photo,
       );
       expect(currentPhotoUser).toBeNull();
 
-      // Watchlist delete from db
+      // Watchlist deleted from db
       const currentWatchlist = await Watchlist.findById(
         initialUsers[0].watchlist,
       );
       expect(currentWatchlist).toBeNull();
 
-      // Reveiews delete from db
+      // Reveiews deleted from db
       const currentReviews = await Review.find({ userId: initialUsers[0]._id });
 
       expect(currentReviews).toHaveLength(0);
 
-      // Lists delete from db
+      // Lists deleted from db
       const currentLists = await List.find({ userId: initialUsers[0]._id });
       expect(currentLists).toHaveLength(0);
 
-      // Rates delete from db
+      // Rates deleted from db
       const currentRates = await Rate.find({ userId: initialUsers[0]._id });
       expect(currentRates).toHaveLength(0);
 
+      rates.forEach(async (rate) => {
+        const movie = await Movie.findById(rate.movieId);
+        const rateCount = rate.movieId.rateCount - 1;
+        const rateValue = rate.movieId.rateValue - rate.value;
+        const rateAverage = Math.round(rateValue / rateCount);
+        expect(movie).toMatchObject({
+          rateValue,
+          rateCount,
+          rateAverage,
+        });
+      });
       // Now the user is not logged in
       await api.get('/api/v1.0/auth/status').expect({
         currentSession: { isAuth: false, userId: null },
