@@ -403,15 +403,15 @@ usersRouter.get(
         const reviews = await Review.find({
           userId: request.params.id,
         }).limit(pageSize)
-          .skip(pageSize * page).sort({ rateAverage: -1, date: -1, idTMDB: -1 })
+          .skip(pageSize * page).sort({ date: -1, rateAverage: -1, idTMDB: -1 })
           .populate('movieId', {
-            name: 1, photo: 1, date: 1, idTMDB: 1, rateAverage: 1,
+            name: 1, photo: 1, release_date: 1, idTMDB: 1, rateAverage: 1,
           })
           .exec();
         console.log('🚀 ~ file: users.js:347 ~ usersRouter.get ~ reviews:', page, pageSize);
 
         response.json({
-          user,
+          user_details: user,
           total: count,
           page_size: pageSize,
           page,
@@ -428,6 +428,20 @@ usersRouter.get(
   },
 );
 
+usersRouter.get('/:id/rates', async (request, response, next) => {
+  try {
+    const user = await User.findById(request.params.id).populate('lists', {
+      name: 1,
+    })
+      .populate('photo', { image: 1 })
+      .lean()
+      .exec();
+    if (user) {
+      if (request.user?.id !== user.id) {
+        user.watchlist = null;
+      }
+      user.photo = user.photo.hasOwnProperty('image') ? `data:${user.photo.image.contentType};base64,${user.photo.image.data.toString('base64')}` : null;
+      response.json(user);
     } else {
       response.status(404).end();
     }
@@ -435,4 +449,5 @@ usersRouter.get(
     next(exception);
   }
 });
+
 module.exports = usersRouter;
