@@ -607,6 +607,16 @@ describe('when there is initially some users saved in db', () => {
       expect(secondResponse.body.page).toBe(page);
       expect(secondResponse.body.prev_page).toContain(`page=${page - 1}`);
       expect(secondResponse.body.next_page).toContain('');
+      expect(secondResponse.body.results[0]).toMatchObject({
+        date: expect.any(String),
+        body: expect.any(String),
+        title: expect.any(String),
+      });
+      expect(secondResponse.body.results[0].movieId.photo).toBeDefined();
+      expect(secondResponse.body.results[0].movieId.name).toBeDefined();
+      expect(secondResponse.body.results[0].movieId.release_date).toBeDefined();
+      expect(secondResponse.body.results[0].movieId.idTMDB).toBeDefined();
+      expect(secondResponse.body.results[0].movieId.rateAverage).toBeDefined();
       expect(secondResponse.body.user_details).toEqual({
         ...userSelected,
         photo: null,
