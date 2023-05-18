@@ -329,4 +329,32 @@ usersRouter.delete('/:id', isAuth, async (request, response, next) => {
   }
 });
 
+usersRouter.get('/:id/reviews', async (request, response, next) => {
+  try {
+    const user = await User.findById(request.params.id).populate('photo', { image: 1 })
+      .lean().exec();
+    if (user) {
+      if (request.user?.id !== user.id) {
+        user.watchlist = null;
+      }
+      user.photo = user.photo.hasOwnProperty('image') ? `data:${user.photo.image.contentType};base64,${user.photo.image.data.toString('base64')}` : null;
+
+      const reviews = await Review.find({
+        userId: request.params.id,
+      }).populate('movieId', {
+        name: 1, photo: 1, date: 1, idTMDB: 1, rateAverage: 1,
+      });
+      console.log('🚀 ~ file: users.js:347 ~ usersRouter.get ~ reviews:', reviews);
+
+      response.json({
+        user,
+        reviews,
+      });
+    } else {
+      response.status(404).end();
+    }
+  } catch (exception) {
+    next(exception);
+  }
+});
 module.exports = usersRouter;
