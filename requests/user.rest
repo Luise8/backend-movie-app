@@ -259,7 +259,7 @@ Content-Type: image/jpg
 
 
 ###    // GET USER/REVIEWS USERNUMBER0 - USER WITH REVIEWS
-GET http://localhost:3003/api/v1.0/users/64501354c41b5db06e01c5a4/reviews HTTP/1.1
+GET http://localhost:3003/api/v1.0/users/64501354c41b5db06e01c5a4/reviews?page=1&pageSize=1  HTTP/1.1
 
 ### // GET USER/REVIEWS USERNUMBER11 -  USER WITHOUT REVIEWS
-GET http://localhost:3003/api/v1.0/users/64501354c41b5db06e01c5af/reviews HTTP/1.1
+GET http://localhost:3003/api/v1.0/users/64501354c41b5db06e01c5af/reviews?page=0&pageSize=1 HTTP/1.1

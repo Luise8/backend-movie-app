@@ -1,7 +1,9 @@
 const usersRouter = require('express').Router();
 const bcrypt = require('bcrypt');
 const mongoose = require('mongoose');
-const { body, validationResult } = require('express-validator');
+const {
+  body, validationResult, query,
+} = require('express-validator');
 const multer = require('multer');
 const sharp = require('sharp');
 const { readFile, unlink } = require('node:fs/promises');
@@ -329,27 +331,103 @@ usersRouter.delete('/:id', isAuth, async (request, response, next) => {
   }
 });
 
-usersRouter.get('/:id/reviews', async (request, response, next) => {
-  try {
-    const user = await User.findById(request.params.id).populate('photo', { image: 1 })
-      .lean().exec();
-    if (user) {
-      if (request.user?.id !== user.id) {
-        user.watchlist = null;
+usersRouter.get(
+  '/:id/reviews',
+  // Sanitization and validation
+  query('page')
+    .optional()
+    .trim()
+    .custom((value) => !/\s/.test(value))
+    .withMessage('No spaces are allowed in page')
+    .custom((value) => /^\d+$/.test(value))
+    .withMessage('page has non-numeric characters.'),
+  query('pageSize')
+    .optional()
+    .trim()
+    .custom((value) => !/\s/.test(value))
+    .withMessage('No spaces are allowed in pageSize')
+    .custom((value) => /^\d+$/.test(value))
+    .withMessage('pageSize has non-numeric characters.')
+    .customSanitizer((value) => {
+      if (Number(value) > 30) {
+        return 30;
+      } if (Number(value) === 0) {
+        return 10;
       }
-      user.photo = user.photo.hasOwnProperty('image') ? `data:${user.photo.image.contentType};base64,${user.photo.image.data.toString('base64')}` : null;
+      return value;
+    }),
+  (req, res, next) => {
+    try {
+      const result = validationResult(req);
+      if (!result.isEmpty()) {
+        return res.status(400).json({ errors: result.array() });
+      }
+      return next();
+    } catch (error) {
+      return next(error);
+    }
+  },
+  async (request, response, next) => {
+    try {
+      const user = await User.findById(request.params.id).populate('photo', { image: 1 })
+        .lean().exec();
+      if (user) {
+        if (request.user?.id !== user.id) {
+          user.watchlist = null;
+        }
+        user.photo = user.photo.hasOwnProperty('image') ? `data:${user.photo.image.contentType};base64,${user.photo.image.data.toString('base64')}` : null;
 
-      const reviews = await Review.find({
-        userId: request.params.id,
-      }).populate('movieId', {
-        name: 1, photo: 1, date: 1, idTMDB: 1, rateAverage: 1,
-      });
-      console.log('🚀 ~ file: users.js:347 ~ usersRouter.get ~ reviews:', reviews);
+        // Get page and pageSize values
+        const pageSize = Number(request.query.pageSize) || 10;
+        const page = Number(request.query.page) || 0;
 
-      response.json({
-        user,
-        reviews,
-      });
+        // Get count of reviews
+        const count = await Review.find({
+          userId: request.params.id,
+        }).count();
+
+        // Get number of prev page
+        let prevPage;
+        if (page === 0) {
+          prevPage = '';
+        } else if ((pageSize * (page - 1)) > count) {
+          if (Number.isInteger(count / pageSize)) {
+            prevPage = (count / pageSize) - 1;
+          } else {
+            prevPage = parseInt(count / pageSize, 10);
+          }
+        } else {
+          prevPage = page - 1;
+        }
+
+        const reviews = await Review.find({
+          userId: request.params.id,
+        }).limit(pageSize)
+          .skip(pageSize * page).sort({ rateAverage: -1, date: -1, idTMDB: -1 })
+          .populate('movieId', {
+            name: 1, photo: 1, date: 1, idTMDB: 1, rateAverage: 1,
+          })
+          .exec();
+        console.log('🚀 ~ file: users.js:347 ~ usersRouter.get ~ reviews:', page, pageSize);
+
+        response.json({
+          user,
+          total: count,
+          page_size: pageSize,
+          page,
+          prev_page: page === 0 ? prevPage : `/movies?page=${prevPage}&page_size=${pageSize}`,
+          next_page: (pageSize * (page + 1)) < count ? `/movies?page=${page + 1}&page_size=${pageSize}` : '',
+          results: reviews,
+        });
+      } else {
+        response.status(404).end();
+      }
+    } catch (exception) {
+      next(exception);
+    }
+  },
+);
+
     } else {
       response.status(404).end();
     }
