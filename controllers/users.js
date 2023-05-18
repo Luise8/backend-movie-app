@@ -408,7 +408,6 @@ usersRouter.get(
             name: 1, photo: 1, release_date: 1, idTMDB: 1, rateAverage: 1,
           })
           .exec();
-        console.log('🚀 ~ file: users.js:347 ~ usersRouter.get ~ reviews:', page, pageSize);
 
         response.json({
           user_details: user,
