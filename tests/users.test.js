@@ -177,7 +177,7 @@ describe('when there is initially some users saved in db', () => {
 
   describe('edit user', () => {
     it('successful with return of new user data', async () => {
-      // To check the data was update in db
+      // To check the initial photo is null
       const resFirstCheck = await api.get(`/api/v1.0/users/${initialUsers[0]._id}`);
 
       // The photo was retrurned as null when there is not an image uploaded
@@ -258,6 +258,7 @@ describe('when there is initially some users saved in db', () => {
           password: initialUsers[0].username, // The password is the same that username
         });
 
+      // To check for no changes later
       const resInitialUser = await api.get(`/api/v1.0/users/${initialUsers[0]._id}`);
 
       const newUserData = {
@@ -344,20 +345,9 @@ describe('when there is initially some users saved in db', () => {
     });
 
     it('fails with status code 401 if the user is not the owner of the account', async () => {
-      // Login
-      await api
-        .post('/api/v1.0/auth/login')
-        .send({
-          username: initialUsers[0].username,
-          password: initialUsers[0].username, // The password is the same that username
-        });
-
       const resInitialUser = await api.get(`/api/v1.0/users/${initialUsers[0]._id}`);
 
-      // Logout
-      await api
-        .post('/api/v1.0/auth/logout');
-
+      // Another user
       // Login
       await api
         .post('/api/v1.0/auth/login')
@@ -374,21 +364,13 @@ describe('when there is initially some users saved in db', () => {
       };
 
       // Check not authorize user
-      const resUserNotAuthorize = await api
+      await api
         .put(`/api/v1.0/users/${initialUsers[0]._id}`)
         .field('username', 'userNumber0Change1')
         .field('password', 'passwordChanged')
         .field('bio', 'Bio of the user 0     remove unnecessary spaces')
         .attach('photo', `${__dirname}/1.jpg`)
         .expect(401);
-
-      // Login
-      await api
-        .post('/api/v1.0/auth/login')
-        .send({
-          username: initialUsers[0].username,
-          password: initialUsers[0].username, // The password is the same that username
-        });
 
       // To check the data is the same in db after all the failed attempts
       const resUser = await api.get(`/api/v1.0/users/${initialUsers[0]._id}`);
@@ -406,8 +388,8 @@ describe('when there is initially some users saved in db', () => {
         correctedBio: 'Bio of the user 0 remove unnecessary spaces',
       };
 
-      // Check not authorize user
-      const resUserNotAuthorize = await api
+      // Check user not logged in
+      await api
         .put(`/api/v1.0/users/${initialUsers[0]._id}`)
         .field('username', 'userNumber0Change1')
         .field('password', 'passwordChanged')
