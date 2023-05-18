@@ -64,6 +64,9 @@ userSchema.post(['find', 'findOne', 'findOneAndUpdate'], function (res) {
 });
 
 function transformDoc(doc) {
+  if (doc === null) {
+    return null;
+  }
   if (doc._id != null) {
     doc.id = doc._id.toString();
     delete doc._id;
