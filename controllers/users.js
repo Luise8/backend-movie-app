@@ -96,8 +96,15 @@ usersRouter.post(
 
 usersRouter.get('/:id', async (request, response, next) => {
   try {
-    const user = await User.findById(request.params.id).populate('lists', {
-      name: 1,
+    const user = await User.findById(request.params.id).populate({
+      path: 'lists',
+      select: {
+        name: 1, description: 1,
+      },
+      perDocumentLimit: 2,
+      options: {
+        sort: { date: -1, _id: -1 },
+      },
     })
       .populate('photo', { image: 1 })
       .lean()
@@ -107,6 +114,26 @@ usersRouter.get('/:id', async (request, response, next) => {
         user.watchlist = null;
       }
       user.photo = user.photo.hasOwnProperty('image') ? `data:${user.photo.image.contentType};base64,${user.photo.image.data.toString('base64')}` : null;
+      const reviews = await Review.find({
+        userId: user.id,
+      }).sort({
+        date: -1, _id: -1,
+      }).populate('movieId', {
+        name: 1, photo: 1, release_date: 1, idTMDB: 1, rateAverage: 1,
+      }).limit(2)
+        .exec();
+      user.reviews = reviews;
+
+      const rates = await Rate.find({
+        userId: request.params.id,
+      }).sort({ date: -1, value: -1, _id: -1 })
+        .populate('movieId', {
+          name: 1, photo: 1, release_date: 1, idTMDB: 1, rateAverage: 1, description: 1,
+        })
+        .limit(2)
+        .exec();
+      user.rates = rates;
+
       response.json(user);
     } else {
       response.status(404).end();
