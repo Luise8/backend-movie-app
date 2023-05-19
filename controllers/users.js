@@ -429,8 +429,8 @@ usersRouter.get(
 
         const reviews = await Review.find({
           userId: request.params.id,
-        }).limit(pageSize)
-          .skip(pageSize * page).sort({ date: -1, rateAverage: -1, idTMDB: -1 })
+        }).sort({ date: -1, _id: -1 }).limit(pageSize)
+          .skip(pageSize * page)
           .populate('movieId', {
             name: 1, photo: 1, release_date: 1, idTMDB: 1, rateAverage: 1,
           })
@@ -525,8 +525,8 @@ usersRouter.get(
 
         const rates = await Rate.find({
           userId: request.params.id,
-        }).limit(pageSize)
-          .skip(pageSize * page).sort({ date: -1, rateAverage: -1, idTMDB: -1 })
+        }).sort({ date: -1, value: -1, _id: -1 }).limit(pageSize)
+          .skip(pageSize * page)
           .populate('movieId', {
             name: 1, photo: 1, release_date: 1, idTMDB: 1, rateAverage: 1, description: 1,
           })
