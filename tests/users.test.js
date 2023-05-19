@@ -574,7 +574,7 @@ describe('when there is initially some users saved in db', () => {
       });
     });
   });
-  describe('users/reviews routes', () => {
+  describe('users/:id/reviews routes', () => {
     beforeAll(async () => {
       await addInitialUsers();
       await addInitialProfilePhotos();
@@ -648,7 +648,7 @@ describe('when there is initially some users saved in db', () => {
     });
   });
 
-  describe('users/rates routes', () => {
+  describe('users/:id/rates routes', () => {
     beforeAll(async () => {
       await addInitialUsers();
       await addInitialProfilePhotos();
