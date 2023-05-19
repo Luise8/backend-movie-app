@@ -99,7 +99,7 @@ usersRouter.get('/:id', async (request, response, next) => {
     const user = await User.findById(request.params.id).populate({
       path: 'lists',
       select: {
-        name: 1, description: 1,
+        name: 1, description: 1, date: 1,
       },
       perDocumentLimit: 2,
       options: {
