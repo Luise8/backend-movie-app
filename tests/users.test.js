@@ -52,9 +52,6 @@ beforeAll(async () => {
   app.use('/api/v1.0/users', usersRouter);
   app.use(middleware.unknownEndpoint);
   app.use(middleware.errorHandler);
-  await addInitialMovies();
-  await addInitialReviews();
-  await addInitialRates();
 });
 const api = request.agent(app);
 
@@ -66,6 +63,12 @@ beforeEach(async () => {
 
 describe('when there is initially some users saved in db', () => {
   describe('users routes', () => {
+    beforeAll(async () => {
+      await addInitialMovies();
+      await addInitialReviews();
+      await addInitialRates();
+    });
+
     beforeEach(async () => {
       await addInitialUsers();
       await addInitialProfilePhotos();
@@ -82,24 +85,30 @@ describe('when there is initially some users saved in db', () => {
       });
 
       it('returned right data of user', async () => {
+        // Add one rate, review and list,
+        // these must be the first elements
+        // of arrays reviews, lists and rates.
+
         const resNotOwner = await api
           .get(`/api/v1.0/users/${initialUsers[0]._id}`)
           .expect(200)
           .expect('Content-Type', /application\/json/);
 
-        const { _id, passwordHash, ...user } = initialUsers[0];
-
-        // To get array like the populated of lists
-        const liststUser = initialLists.filter((list) => user.lists
-          .includes(list._id)).map((list) => ({ id: list._id, name: list.name }));
+        const {
+          _id, passwordHash, lists, ...user
+        } = initialUsers[0];
 
         expect(resNotOwner.body).toMatchObject({
           id: _id,
           ...user,
           photo: null,
           watchlist: null,
-          lists: liststUser,
         });
+
+        // Limit to each array to max 2 items
+        expect(resNotOwner.body.lists.length).toBeLessThan(3);
+        expect(resNotOwner.body.rates.length).toBeLessThan(3);
+        expect(resNotOwner.body.reviews.length).toBeLessThan(3);
 
         // Login
         await api
@@ -115,12 +124,11 @@ describe('when there is initially some users saved in db', () => {
           .expect(200)
           .expect('Content-Type', /application\/json/);
 
-        // wathlist is showing to owner
+        // watchlist is showing to owner
         expect(resOwner.body).toMatchObject({
           id: _id,
           ...user,
           photo: null,
-          lists: liststUser,
         });
       });
 
