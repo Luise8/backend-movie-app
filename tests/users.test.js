@@ -581,6 +581,11 @@ describe('when there is initially some users saved in db', () => {
       await addInitialLists();
       await addInitialWatchlists();
     });
+    beforeAll(async () => {
+      await addInitialMovies();
+      await addInitialReviews();
+      await addInitialRates();
+    });
 
     it('reviews are returned as json', async () => {
       await api.get(`/api/v1.0/users/${initialUsers[0]._id}/reviews`).expect(200).expect('Content-Type', /application\/json/);
@@ -649,6 +654,11 @@ describe('when there is initially some users saved in db', () => {
       await addInitialProfilePhotos();
       await addInitialLists();
       await addInitialWatchlists();
+    });
+    beforeAll(async () => {
+      await addInitialMovies();
+      await addInitialReviews();
+      await addInitialRates();
     });
 
     it('rates are returned as json', async () => {
