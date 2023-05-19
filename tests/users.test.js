@@ -576,15 +576,13 @@ describe('when there is initially some users saved in db', () => {
   });
   describe('users/:id/reviews routes', () => {
     beforeAll(async () => {
+      await addInitialMovies();
+      await addInitialReviews();
+      await addInitialRates();
       await addInitialUsers();
       await addInitialProfilePhotos();
       await addInitialLists();
       await addInitialWatchlists();
-    });
-    beforeAll(async () => {
-      await addInitialMovies();
-      await addInitialReviews();
-      await addInitialRates();
     });
 
     it('reviews are returned as json', async () => {
@@ -650,15 +648,13 @@ describe('when there is initially some users saved in db', () => {
 
   describe('users/:id/rates routes', () => {
     beforeAll(async () => {
+      await addInitialMovies();
+      await addInitialReviews();
+      await addInitialRates();
       await addInitialUsers();
       await addInitialProfilePhotos();
       await addInitialLists();
       await addInitialWatchlists();
-    });
-    beforeAll(async () => {
-      await addInitialMovies();
-      await addInitialReviews();
-      await addInitialRates();
     });
 
     it('rates are returned as json', async () => {
