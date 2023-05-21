@@ -33,6 +33,7 @@ const upload = multer({
   },
 }).single('photo');
 
+// Create user
 usersRouter.post(
   '/',
   body('username')
@@ -94,6 +95,7 @@ usersRouter.post(
   },
 );
 
+// Get user
 usersRouter.get('/:id', async (request, response, next) => {
   try {
     const user = await User.findById(request.params.id).populate({
@@ -143,6 +145,7 @@ usersRouter.get('/:id', async (request, response, next) => {
   }
 });
 
+// Edit user
 usersRouter.put(
   '/:id',
   isAuth,
@@ -315,6 +318,7 @@ usersRouter.put(
   },
 );
 
+// Delete user
 usersRouter.delete('/:id', isAuth, async (request, response, next) => {
   const session = await mongoose.connection.startSession();
   try {
@@ -358,6 +362,7 @@ usersRouter.delete('/:id', isAuth, async (request, response, next) => {
   }
 });
 
+// Get reviews
 usersRouter.get(
   '/:id/reviews',
   // Sanitization and validation
@@ -454,6 +459,7 @@ usersRouter.get(
   },
 );
 
+// Get rates
 usersRouter.get(
   '/:id/rates',
   // Sanitization and validation
@@ -546,6 +552,311 @@ usersRouter.get(
       }
     } catch (exception) {
       next(exception);
+    }
+  },
+);
+
+// Get Lists
+usersRouter.get(
+  '/:id/lists',
+  // Sanitization and validation
+  query('page')
+    .optional()
+    .trim()
+    .custom((value) => !/\s/.test(value))
+    .withMessage('No spaces are allowed in page')
+    .custom((value) => /^\d+$/.test(value))
+    .withMessage('page has non-numeric characters.'),
+  query('pageSize')
+    .optional()
+    .trim()
+    .custom((value) => !/\s/.test(value))
+    .withMessage('No spaces are allowed in pageSize')
+    .custom((value) => /^\d+$/.test(value))
+    .withMessage('pageSize has non-numeric characters.')
+    .customSanitizer((value) => {
+      if (Number(value) > 30) {
+        return 30;
+      } if (Number(value) === 0) {
+        return 10;
+      }
+      return value;
+    }),
+  (req, res, next) => {
+    try {
+      const result = validationResult(req);
+      if (!result.isEmpty()) {
+        return res.status(400).json({ errors: result.array() });
+      }
+      return next();
+    } catch (error) {
+      return next(error);
+    }
+  },
+  async (request, response, next) => {
+    try {
+      const user = await User.findById(request.params.id).populate('photo', { image: 1 })
+        .lean().exec();
+      if (user) {
+        if (request.user?.id !== user.id) {
+          user.watchlist = null;
+        }
+        user.photo = user.photo.hasOwnProperty('image') ? `data:${user.photo.image.contentType};base64,${user.photo.image.data.toString('base64')}` : null;
+
+        // Get page and pageSize values
+        const pageSize = Number(request.query.pageSize) || 10;
+        const page = Number(request.query.page) || 0;
+
+        // Get count of lists
+        const count = await List.find({
+          userId: request.params.id,
+        }).count();
+
+        // Get number of prev page
+        let prevPage;
+        if (page === 0) {
+          prevPage = '';
+        } else if ((pageSize * (page - 1)) > count) {
+          if (Number.isInteger(count / pageSize)) {
+            prevPage = (count / pageSize) - 1;
+          } else {
+            prevPage = parseInt(count / pageSize, 10);
+          }
+        } else {
+          prevPage = page - 1;
+        }
+
+        const lists = await List.find({
+          userId: request.params.id,
+        }).sort({ date: -1, _id: -1 }).limit(pageSize)
+          .skip(pageSize * page)
+          .exec();
+
+        response.json({
+          user_details: user,
+          total: count,
+          page_size: pageSize,
+          page,
+          prev_page: page === 0 ? prevPage : `/movies?page=${prevPage}&page_size=${pageSize}`,
+          next_page: (pageSize * (page + 1)) < count ? `/movies?page=${page + 1}&page_size=${pageSize}` : '',
+          results: lists,
+        });
+      } else {
+        response.status(404).end();
+      }
+    } catch (exception) {
+      next(exception);
+    }
+  },
+);
+
+// Get one list
+usersRouter.get(
+  '/:id/lists/:listId',
+  // Sanitization and validation
+  query('page')
+    .optional()
+    .trim()
+    .custom((value) => !/\s/.test(value))
+    .withMessage('No spaces are allowed in page')
+    .custom((value) => /^\d+$/.test(value))
+    .withMessage('page has non-numeric characters.'),
+  query('pageSize')
+    .optional()
+    .trim()
+    .custom((value) => !/\s/.test(value))
+    .withMessage('No spaces are allowed in pageSize')
+    .custom((value) => /^\d+$/.test(value))
+    .withMessage('pageSize has non-numeric characters.')
+    .customSanitizer((value) => {
+      if (Number(value) > 30) {
+        return 30;
+      } if (Number(value) === 0) {
+        return 10;
+      }
+      return value;
+    }),
+  query('light')
+    .optional()
+    .trim()
+    .isBoolean()
+    .withMessage('Must be true or false, or a number 1 to true and 0 to false'),
+  (req, res, next) => {
+    try {
+      const result = validationResult(req);
+      if (!result.isEmpty()) {
+        return res.status(400).json({ errors: result.array() });
+      }
+      return next();
+    } catch (error) {
+      return next(error);
+    }
+  },
+  async (request, response, next) => {
+    try {
+      const user = await User.findById(request.params.id).populate('photo', { image: 1 })
+        .lean().exec();
+
+      // Get count
+      const list = await List.findById(request.params.listId)
+        .exec();
+      const count = list.movies.length;
+      if (user && list) {
+        if (request.user?.id !== user.id) {
+          user.watchlist = null;
+        }
+        user.photo = user.photo.hasOwnProperty('image') ? `data:${user.photo.image.contentType};base64,${user.photo.image.data.toString('base64')}` : null;
+
+        // Get page and pageSize values
+        const pageSize = Number(request.query.pageSize) || 10;
+        const page = Number(request.query.page) || 0;
+
+        // Get ligth value
+        const light = request.query.light || false;
+
+        // Get number of prev page
+        let prevPage;
+        if (page === 0) {
+          prevPage = '';
+        } else if ((pageSize * (page - 1)) > count) {
+          if (Number.isInteger(count / pageSize)) {
+            prevPage = (count / pageSize) - 1;
+          } else {
+            prevPage = parseInt(count / pageSize, 10);
+          }
+        } else {
+          prevPage = page - 1;
+        }
+
+        const listTotalIds = list.movies;
+        let moviesArray;
+        if (light === 'true' || light === '1') {
+          moviesArray = await List.findById(request.params.listId)
+            .select('movies')
+            .populate({
+              path: 'movies',
+              select: {
+                name: 1, idTMDB: 1, photo: 1, rateAverage: 1, release_date: 1,
+              },
+            })
+            .exec();
+          response.json({
+            user_details: user,
+            total: count,
+            description: list.description,
+            listTotalIds,
+            name: list.name,
+            date: list.date,
+            results: moviesArray.movies,
+            id: list.id,
+          });
+        } else {
+          moviesArray = await List.findById(request.params.listId)
+            .select('movies')
+            .where('movies').slice([page * pageSize, pageSize])
+            .populate({
+              path: 'movies',
+            })
+            .exec();
+          response.json({
+            user_details: user,
+            total: count,
+            page_size: pageSize,
+            page,
+            prev_page: page === 0 ? prevPage : `/movies?page=${prevPage}&page_size=${pageSize}`,
+            next_page: (pageSize * (page + 1)) < count ? `/movies?page=${page + 1}&page_size=${pageSize}` : '',
+            description: list.description,
+            listTotalIds,
+            id: list.id,
+            name: list.name,
+            date: list.date,
+            results: moviesArray.movies,
+          });
+        }
+      } else {
+        response.status(404).end();
+      }
+    } catch (exception) {
+      next(exception);
+    }
+  },
+);
+
+// Create list
+usersRouter.post(
+  '/:id/lists',
+  isAuth,
+  async (request, response, next) => {
+    try {
+      // Checks
+      const { user } = request;
+      // Check owner
+      // First checks
+      const userDb = await User.findById(request.params.id);
+      if (!userDb) return response.status(404).json({ error: 'user no found' });
+      if (user.id !== request.params.id) return response.status(401).end();
+      next();
+    } catch (error) {
+      next(error);
+    }
+  },
+  // Sanitization and validation
+  body('name')
+    .trim()
+    .customSanitizer((value) => value.replace(/\s{2,}/g, ' ')
+      .replace(/-{2,}/g, '-')
+      .replace(/'{2,}/g, '\'')
+      .replace(/\.{2,}/g, '.')
+      .replace(/,{2,}/g, ',')
+      .replace(/\?{2,}/g, '?'))
+    .isAlphanumeric('en-US', { ignore: ' -\'.,?' })
+    .withMessage('Name has no valid characters.')
+    .isLength({ min: 12 })
+    .withMessage('Name must be specified with min 12 characters'),
+  body('description')
+    .optional()
+    .trim()
+    .customSanitizer((value) => value.replace(/\s{2,}/g, ' ')
+      .replace(/-{2,}/g, '-')
+      .replace(/'{2,}/g, '\'')
+      .replace(/\.{2,}/g, '.')
+      .replace(/,{2,}/g, ',')
+      .replace(/\?{2,}/g, '?'))
+    .isAlphanumeric('en-US', { ignore: ' -\'.,?' })
+    .withMessage('Description has no valid characters.'),
+  async (request, response, next) => {
+    try {
+      const result = validationResult(request);
+      if (!result.isEmpty()) {
+        return response.status(400).json({ errors: result.array() });
+      }
+      return next();
+    } catch (error) {
+      return next(error);
+    }
+  },
+  async (request, response, next) => {
+    const session = await mongoose.connection.startSession();
+    try {
+      session.startTransaction();
+
+      const { name } = request.body;
+      const { description } = request.body;
+      const list = new List({
+        name, description, movies: [], userId: request.user.id, date: new Date(),
+      });
+      await list.save({ session });
+      const userToUpdate = await User.findById(request.params.id).session(session);
+      userToUpdate.lists.push(list);
+      await userToUpdate.save();
+      // Confirm transaction
+      await session.commitTransaction();
+      session.endSession();
+      return response.status(201).json(list);
+    } catch (error) {
+      await session.abortTransaction();
+      session.endSession();
+      next(error);
     }
   },
 );
