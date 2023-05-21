@@ -194,7 +194,7 @@ const sixteenMoviesWithoutId = [
     name: 'Fast & Furious',
     photo: 'https://image.tmdb.org/t/p/w185//AmY8rE2HzWzZs5S81CygXXYDjki.jpg',
     description: "When a crime brings them back to L.A., fugitive ex-con Dom Toretto reignites his feud with agent Brian O'Conner. But as they are forced to confront a shared enemy, Dom and Brian must give in to an uncertain new trust if they hope to outmaneuver him. And the two men will find the best way to get revenge: push the limits of what's possible behind the wheel.",
-    date: new Date(),
+    date: new Date('2050'),
     release_date: '2009-04-02',
     idTMDB: 13804,
   },
@@ -202,7 +202,7 @@ const sixteenMoviesWithoutId = [
     name: 'Fast Five',
     photo: 'https://image.tmdb.org/t/p/w185//gEfQjjQwY7fh5bI4GlG0RrBu7Pz.jpg',
     description: "Former cop Brian O'Conner partners with ex-con Dom Toretto on the opposite side of the law. Since Brian and Mia Toretto broke Dom out of custody, they've blown across many borders to elude authorities. Now backed into a corner in Rio de Janeiro, they must pull one last job in order to gain their freedom.",
-    date: new Date(),
+    date: new Date('2048'),
     release_date: '2011-04-20',
     idTMDB: 51497,
   },
@@ -226,7 +226,7 @@ const sixteenMoviesWithoutId = [
     name: 'The Turbo Charged Prelude for 2 Fast 2 Furious',
     photo: 'https://image.tmdb.org/t/p/w185//bztZ5NWmsT7oq0vCWGQGWxd10Gf.jpg',
     description: "Turbo-Charged Prelude is a 2003 short film, directed by Philip Atwell, featuring Paul Walker, reprising his role as Brian O'Conner, in a short series of sequences which bridge The Fast and The Furious with its first sequel, 2 Fast 2 Furious.",
-    date: new Date(),
+    date: new Date('2049'),
     release_date: '2003-06-03',
     idTMDB: 77959,
   },
@@ -311,29 +311,46 @@ function randomInteger(min, max) {
 function createFourLists() {
   const lists = [];
   for (let i = 0; i < 3; i += 1) {
-    lists.push(
-      {
-        _id: fourlistIds[i],
-        name: `List number ${i}`,
-        description: `This is the description of list number ${i}made by the ${initialUsers[i].username} `,
-        date: new Date().toISOString(),
-        userId: initialUsers[i]._id,
-        movies: [
-          initialMovies[randomInteger(
-            0,
-            initialMovies.length - 1,
-          )]._id,
-          initialMovies[randomInteger(
-            0,
-            initialMovies.length - 1,
-          )]._id,
-          initialMovies[randomInteger(
-            0,
-            initialMovies.length - 1,
-          )]._id,
-        ],
-      },
-    );
+    if (i === 0) {
+      lists.push(
+        {
+          _id: fourlistIds[i],
+          name: `List number ${i}`,
+          description: `This is the description of list number ${i}made by the ${initialUsers[i].username} `,
+          date: new Date().toISOString(),
+          userId: initialUsers[i]._id,
+          movies: [
+            initialMovies[10]._id,
+            initialMovies[14]._id,
+            initialMovies[11]._id,
+          ],
+        },
+      );
+    } else {
+      lists.push(
+        {
+          _id: fourlistIds[i],
+          name: `List number ${i}`,
+          description: `This is the description of list number ${i}made by the ${initialUsers[i].username} `,
+          date: new Date().toISOString(),
+          userId: initialUsers[i]._id,
+          movies: [
+            initialMovies[randomInteger(
+              0,
+              initialMovies.length - 1,
+            )]._id,
+            initialMovies[randomInteger(
+              0,
+              initialMovies.length - 1,
+            )]._id,
+            initialMovies[randomInteger(
+              0,
+              initialMovies.length - 1,
+            )]._id,
+          ],
+        },
+      );
+    }
   }
 
   // Add empty list to initialUsers[0]
@@ -341,7 +358,7 @@ function createFourLists() {
     _id: fourlistIds[fourlistIds.length - 1],
     name: `List number ${fourlistIds.length - 1}`,
     description: `This is the description of list number ${fourlistIds.length - 1} made by the ${initialUsers[0].username} `,
-    date: new Date().toISOString(),
+    date: new Date('1999').toISOString(),
     userId: initialUsers[0]._id,
     movies: [],
   });
