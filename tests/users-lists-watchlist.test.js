@@ -534,6 +534,136 @@ describe('when there is initially some users saved in db', () => {
       });
     });
 
+    describe('delete lists', () => {
+      beforeEach(async () => {
+        await addInitialLists();
+        await addInitialUsers();
+      });
+
+      it('successful with return of status code 204 with user logged in who is the owner of the account', async () => {
+      // Login
+        await api
+          .post('/api/v1.0/auth/login')
+          .send({
+            username: initialUsers[0].username,
+            password: initialUsers[0].username, // The password is the same that username
+          });
+
+        // Initial data
+        // lists[0] that will be deleted from db
+        const listToDelete = await api.get(`/api/v1.0/users/${initialUsers[0]._id}/lists/${initialUsers[0].lists[0]}`);
+
+        // User
+        const user = await api.get(`/api/v1.0/users/${initialUsers[0]._id}/lists`);
+
+        // To check the user has initial lists before to delete one
+        expect(user.body.total).toBeGreaterThan(0);
+
+        // Delete list
+        await api
+          .delete(`/api/v1.0/users/${initialUsers[0]._id}/lists/${initialUsers[0].lists[0]}`)
+          .expect(204);
+
+        // To check the data was updated in db
+
+        // List not found
+        await api.get(`/api/v1.0/users/${initialUsers[0]._id}/lists/${initialUsers[0].lists[0]}`).expect(404);
+
+        const currentLists = await List.find().count();
+
+        // One list was removed from lists colletion
+        expect(currentLists).toBe(initialLists.length - 1);
+
+        // User after delete one of his list
+        const userAfter = await api.get(`/api/v1.0/users/${initialUsers[0]._id}/lists`);
+
+        // One list was removed from user.lists
+        expect(userAfter.body.total).toBe(initialUsers[0].lists.length - 1);
+        // The list selected was removed
+        expect(userAfter.body.results).not
+          .toContainEqual(expect.objectContaining({ id: listToDelete.body.id }));
+      });
+
+      it('fails with status code 404 if the list does not exist', async () => {
+        const newList = new List({
+          name: 'This is a list made to be deleted later',
+          description: '',
+          date: new Date().toISOString(),
+          userId: initialUsers[0]._id,
+          movies: [],
+        });
+
+        await newList.save();
+        await newList.deleteOne({});
+
+        // Login
+        await api
+          .post('/api/v1.0/auth/login')
+          .send({
+            username: initialUsers[0].username,
+            password: initialUsers[0].username, // The password is the same that username
+          });
+
+        // Trying to delete list
+        const res = await api
+          .delete(`/api/v1.0/users/${initialUsers[0]._id}/lists/${newList.id}`);// .expect(404);
+        console.log('🚀 ~ file: users-lists-watchlist.test.js:633 ~ it ~ res:', res);
+
+        // No list was removed from lists colletion
+        const currentLists = await List.find().count();
+        expect(currentLists).toBe(initialLists.length);
+
+        // User after fails trying to delete one list that does not exist
+        const userAfter = await api.get(`/api/v1.0/users/${initialUsers[0]._id}/lists`);
+
+        // No list was removed from user.lists
+        expect(userAfter.body.total).toBe(initialUsers[0].lists.length);
+      });
+
+      it('fails with status code 401 if the user is not the owner of the list', async () => {
+      // Login
+        await api
+          .post('/api/v1.0/auth/login')
+          .send({
+            username: initialUsers[1].username,
+            password: initialUsers[1].username, // The password is the same that username
+          });
+
+        // Check not authorize user
+        await api
+          .delete(`/api/v1.0/users/${initialUsers[0]._id}/lists/${initialUsers[0].lists[0]}`).expect(401);
+
+        // No list was removed from lists colletion
+        const currentLists = await List.find().count();
+        expect(currentLists).toBe(initialLists.length);
+
+        // User after fails trying to delete one list that does not exist
+        const userAfter = await api.get(`/api/v1.0/users/${initialUsers[0]._id}/lists`);
+
+        // No list was removed from user.lists
+        expect(userAfter.body.total).toBe(initialUsers[0].lists.length);
+      });
+
+      it('fails with status code 401 if the user is not logged in', async () => {
+      // Check user not logged in
+        await api
+          .delete(`/api/v1.0/users/${initialUsers[0]._id}/lists/${initialUsers[0].lists[0]}`)
+          .expect({
+            msg: 'You are not authorized to view this resource',
+          });
+
+        // No list was removed from lists colletion
+        const currentLists = await List.find().count();
+        expect(currentLists).toBe(initialLists.length);
+
+        // User after fails trying to delete one list that does not exist
+        const userAfter = await api.get(`/api/v1.0/users/${initialUsers[0]._id}/lists`);
+
+        // No list was removed from user.lists
+        expect(userAfter.body.total).toBe(initialUsers[0].lists.length);
+      });
+    });
+  });
 });
 
 afterAll(async () => {
