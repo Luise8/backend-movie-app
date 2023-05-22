@@ -1,3 +1,4 @@
+/* eslint-disable no-await-in-loop */
 const usersRouter = require('express').Router();
 const bcrypt = require('bcrypt');
 const mongoose = require('mongoose');
@@ -8,6 +9,7 @@ const multer = require('multer');
 const sharp = require('sharp');
 const { readFile, unlink } = require('node:fs/promises');
 const fileTypeCjs = require('file-type-cjs');
+const axios = require('axios');
 const User = require('../models/user');
 const List = require('../models/list');
 const Watchlist = require('../models/watchlist');
@@ -16,6 +18,8 @@ const Review = require('../models/review');
 const Rate = require('../models/rate');
 const Movie = require('../models/movie');
 const { isAuth } = require('../utils/middleware');
+const { takeMovieData } = require('../utils/TMDB-functions');
+const config = require('../utils/config');
 
 const upload = multer({
   dest: 'temp/uploads/',
@@ -266,7 +270,6 @@ usersRouter.put(
             const file = await readFile(request.file.path);
             resultFileType = await fileTypeCjs.fromBuffer(file);
           } else {
-            console.log('maria');
             const { fileTypeFromFile } = await import('file-type');
             resultFileType = await fileTypeFromFile(request.file.path);
           }
@@ -853,6 +856,204 @@ usersRouter.post(
       await session.commitTransaction();
       session.endSession();
       return response.status(201).json(list);
+    } catch (error) {
+      await session.abortTransaction();
+      session.endSession();
+      next(error);
+    }
+  },
+);
+
+// Edit list
+usersRouter.put(
+  '/:id/lists/:listId',
+  isAuth,
+  // Sanitization and validation
+  body('name')
+    .optional()
+    .trim()
+    .customSanitizer((value) => value.replace(/\s{2,}/g, ' ')
+      .replace(/-{2,}/g, '-')
+      .replace(/'{2,}/g, '\'')
+      .replace(/\.{2,}/g, '.')
+      .replace(/,{2,}/g, ',')
+      .replace(/\?{2,}/g, '?'))
+    .isAlphanumeric('en-US', { ignore: ' -\'.,?' })
+    .withMessage('Name has no valid characters.')
+    .isLength({ min: 12 })
+    .withMessage('Name must be specified with min 12 characters'),
+  body('description')
+    .optional()
+    .trim()
+    .customSanitizer((value) => value.replace(/\s{2,}/g, ' ')
+      .replace(/-{2,}/g, '-')
+      .replace(/'{2,}/g, '\'')
+      .replace(/\.{2,}/g, '.')
+      .replace(/,{2,}/g, ',')
+      .replace(/\?{2,}/g, '?'))
+    .isAlphanumeric('en-US', { ignore: ' -\'.,?' })
+    .withMessage('Description has no valid characters.'),
+  body('movies')
+    .optional()
+    .isArray({ max: 100 })
+    .withMessage('Movies must be an array with max length of 100 movies'),
+  body('movies[*]')
+    .optional()
+    .isString()
+    .bail()
+    .custom((value) => /^[a-z0-9]+$/i.test(value))
+    .withMessage('No valids movies.'),
+  async (request, response, next) => {
+    try {
+      const result = validationResult(request);
+      if (!result.isEmpty()) {
+        return response.status(400).json({ errors: result.array() });
+      }
+      return next();
+    } catch (error) {
+      return next(error);
+    }
+  },
+  async (request, response, next) => {
+    try {
+      // Checks
+      const { user } = request;
+      // Check user and list exist and user is the owner of the list
+      const userDb = await User.findById(request.params.id);
+      if (!userDb) return response.status(404).json({ error: 'user no found' });
+      const list = await List.findById(request.params.listId);
+      if (!list) return response.status(404).json({ error: 'list no found' });
+      if (user.id !== request.params.id) return response.status(401).end();
+      if (user.id !== list.userId.toString()) return response.status(401).end();
+      next();
+    } catch (error) {
+      next(error);
+    }
+  },
+  async (request, response, next) => {
+    const session = await mongoose.connection.startSession();
+
+    try {
+      const { name } = request.body;
+      const { description } = request.body;
+      let { movies } = request.body;
+      const list = await List.findById(request.params.listId).exec();
+
+      if (name) list.name = name;
+      if (description) list.description = description;
+      // If the movies parameter is not defined
+      if (!movies) {
+        session.endSession();
+        await list.save();
+        return response.json(list);
+      }
+
+      // If the movies parameter is an empty array
+      if (movies?.length === 0) {
+        list.movies = [];
+        session.endSession();
+        await list.save();
+        return response.json(list);
+      }
+
+      // If the movies parameter is defined then handle this
+
+      // Get matching movies
+      const moviesInDb = await Movie.find({ idTMDB: movies }).exec();
+
+      // Apply changes to differentiate between found and missing movies
+      if (moviesInDb) {
+        movies = movies.map((movie) => {
+          const movieFound = moviesInDb.find((elem) => elem.idTMDB === movie);
+          if (movieFound !== undefined) {
+            return { [movie]: movieFound.id };
+          }
+          return movie;
+        });
+      }
+
+      // Start session
+      session.startTransaction();
+
+      // Check if there are some movies missing from mongodb
+      const moviesToFind = movies.filter((item, index, array) => {
+        if (typeof item === 'object') return false;
+        return array.indexOf(item) === index;
+      }).map((item) => item);
+
+      // No movies missing, so we got all of the movies from our mongodb
+      if (moviesToFind.length === 0) {
+        // Get array of ObjectId of movies
+        movies = movies.map((movie) => {
+          if (typeof movie === 'object') {
+            return Object.values(movie)[0];
+          }
+          throw new Error('Invalid input');
+        });
+
+        // Add new movies
+        list.movies = movies;
+        // Save list
+        await list.save({
+          session,
+        });
+
+        // Confirm transaction
+        await session.commitTransaction();
+        session.endSession();
+        return response.json(list);
+      }
+
+      // Movies missing, so we need to get movies from TMDB
+      // Get error of TMDB to modify message of error
+      try {
+      // Get movies from TMDB
+        await (async function setNewMoviesFromTMDB() {
+          // eslint-disable-next-line no-restricted-syntax
+          for (let movie of moviesToFind) {
+            const responseTMDB = await axios.get(config.URL_FIND_ONE_MOVIE(movie));
+            if (responseTMDB.data) {
+              const newMovie = takeMovieData(responseTMDB.data);
+              const movieToSave = new Movie({
+                ...newMovie,
+              }, { session });
+
+              await movieToSave.save({ session });
+              movie = movieToSave ? { [movie]: movieToSave._id.toString() } : movie;
+            }
+          }
+        }());
+      } catch (error) {
+        throw Error('Invalid input');
+      }
+
+      // Get id of new movies added to mongodb
+      const restMovies = await Movie.find({ idTMDB: moviesToFind }).session(session);
+
+      // Get array of ObjectId of movies
+      movies = movies.map((movie) => {
+        if (typeof movie === 'object') {
+          return Object.values(movie)[0];
+        }
+        // Here movie is a string
+        const movieFound = restMovies.find((elem) => elem.idTMDB === movie);
+        if (movieFound !== undefined) {
+          return movieFound.id;
+        }
+        throw new Error('Invalid input');
+      });
+
+      // Add new movies
+      list.movies = movies;
+      // Save list
+      await list.save({
+        session,
+      });
+
+      // Confirm transaction
+      await session.commitTransaction();
+      session.endSession();
+      return response.json(list);
     } catch (error) {
       await session.abortTransaction();
       session.endSession();
