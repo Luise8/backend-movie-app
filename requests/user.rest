@@ -298,3 +298,43 @@ Content-Type: application/json
       "name": "New list created by userNumber0"
 }
 
+###    // EDIT LIST USERNUMBER0 - USER WITH LISTS
+PUT http://localhost:3003/api/v1.0/users/64501354c41b5db06e01c5a4/lists/64502ae06dc338b6e80b8c58  HTTP/1.1
+Content-Type: application/json
+
+{
+      "name": "List number 3 edited",
+      "description": "new description to this list",
+      "movies": ["82992"]
+}
+
+
+###    // EDIT LIST USERNUMBER0 - USER WITH LISTS
+PUT http://localhost:3003/api/v1.0/users/64501354c41b5db06e01c5a4/lists/64502ae06dc338b6e80b8c58  HTTP/1.1
+Content-Type: application/json
+
+{
+      "name": "List number 3 edited",
+      "description": "new description to this list",
+      "movies": ["13804", "82992", "584", "77959", "675353", "675353"]
+}
+
+###    // EDIT LIST USERNUMBER0 - USER WITH LISTS - EMPTY ARRAY
+PUT http://localhost:3003/api/v1.0/users/64501354c41b5db06e01c5a4/lists/64502ae06dc338b6e80b8c58  HTTP/1.1
+Content-Type: application/json
+
+{
+      "name": "List number 3 edited",
+      "description": "new description to this list",
+      "movies": []
+}
+
+###    // EDIT LIST USERNUMBER0 - USER WITH LISTS - WRONG MOVIES FIELD
+PUT http://localhost:3003/api/v1.0/users/64501354c41b5db06e01c5a4/lists/64502ae06dc338b6e80b8c58  HTTP/1.1
+Content-Type: application/json
+
+{
+      "name": "List number 3 edited",
+      "description": "new description to this list",
+      "movies": "String"
+}
