@@ -18,6 +18,13 @@ const listSchema = new mongoose.Schema({
   }],
 });
 
+listSchema.pre('validate', function (next) {
+  if (this.movies.length > 100) {
+    throw new Error('The maximum size of list is 100 movies');
+  }
+  next();
+});
+
 listSchema.set('toJSON', {
   transform: (document, returnedObject) => {
     returnedObject.id = returnedObject._id.toString();
