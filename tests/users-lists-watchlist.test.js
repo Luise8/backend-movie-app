@@ -384,6 +384,156 @@ describe('when there is initially some users saved in db', () => {
       });
     });
 
+    describe('edit lists', () => {
+      beforeEach(async () => {
+        await addInitialLists();
+      });
+      it('successful with return of new list data', async () => {
+        // Get the initial data of lists[0]
+        const resFirst = await api.get(`/api/v1.0/users/${initialUsers[0]._id}/lists/${initialUsers[0].lists[0]}`);
+
+        // Login
+        await api
+          .post('/api/v1.0/auth/login')
+          .send({
+            username: initialUsers[0].username,
+            password: initialUsers[0].username, // The password is the same that username
+          });
+
+        const newlist = {
+          name: `userNumber${initialUsers.length}`,
+          description: `A new list made by ${initialUsers[0].username}`,
+          movies: [
+            initialMovies[0].idTMDB,
+            initialMovies[1].idTMDB,
+          ],
+        };
+        const resUpdate = await api
+          .put(`/api/v1.0/users/${initialUsers[0]._id}/lists/${initialUsers[0].lists[0]}`)
+          .send({
+            name: newlist.name,
+            description: newlist.description,
+            movies: newlist.movies,
+
+          })
+          .expect(200);
+
+        // Right response with new data
+        expect(resUpdate.body).toMatchObject({
+          name: newlist.name,
+          description: newlist.description,
+          id: resFirst.body.id,
+          movies: [
+            initialMovies[0]._id,
+            initialMovies[1]._id,
+          ],
+        });
+
+        // To check the data was update in db
+        const resListUpdated = await api.get(`/api/v1.0/users/${initialUsers[0]._id}/lists/${initialUsers[0].lists[0]}`);
+
+        expect(resListUpdated.body).toMatchObject({
+          name: newlist.name,
+          description: newlist.description,
+          id: resFirst.body.id,
+          total: newlist.movies.length,
+          listTotalIds: [
+            initialMovies[0]._id,
+            initialMovies[1]._id,
+          ],
+        });
+      });
+
+      it('fails with status code 400 if the inputs are invalids', async () => {
+        // Login
+        await api
+          .post('/api/v1.0/auth/login')
+          .send({
+            username: initialUsers[0].username,
+            password: initialUsers[0].username, // The password is the same that username
+          });
+
+        // Get the initial data of lists[0]
+        const resFirst = await api.get(`/api/v1.0/users/${initialUsers[0]._id}/lists/${initialUsers[0].lists[0]}`);
+
+        const newlist = {
+          name: 'l', // Too short name
+          description: `A new list made by ${initialUsers[0].username}`,
+          movies: ['casa'],
+        };
+        const resUpdate = await api
+          .put(`/api/v1.0/users/${initialUsers[0]._id}/lists/${initialUsers[0].lists[0]}`)
+          .send({
+            name: newlist.name,
+            description: newlist.description,
+            movies: newlist.movies,
+          }).expect(400);
+
+        expect(resUpdate.body.errors).toBeDefined();
+        expect(resUpdate.body.errors.length).toBeGreaterThan(0);
+
+        // To check the data is the same in db after all the failed attempts
+        const resSecond = await api.get(`/api/v1.0/users/${initialUsers[0]._id}/lists/${initialUsers[0].lists[0]}`);
+        expect(resFirst.body).toMatchObject(resSecond.body);
+      });
+
+      it('fails with status code 401 if the user is not the owner of the account', async () => {
+        // Get the initial data of lists[0]
+        const resFirst = await api.get(`/api/v1.0/users/${initialUsers[0]._id}/lists/${initialUsers[0].lists[0]}`);
+
+        // Another user
+        // Login
+        await api
+          .post('/api/v1.0/auth/login')
+          .send({
+            username: initialUsers[1].username,
+            password: initialUsers[1].username, // The password is the same that username
+          });
+
+        const newlist = {
+          name: `userNumber${initialUsers.length}`,
+          description: `A new list made by ${initialUsers[0].username}`,
+        };
+
+        // Check not authorize user
+        const resUpdate = await api
+          .put(`/api/v1.0/users/${initialUsers[0]._id}/lists/${initialUsers[0].lists[0]}`)
+          .send({
+            name: newlist.name,
+            description: newlist.description,
+          }).expect(401);
+
+        // To check the data is the same in db after all the failed attempts
+        const resSecond = await api.get(`/api/v1.0/users/${initialUsers[0]._id}/lists/${initialUsers[0].lists[0]}`);
+        expect(resFirst.body).toMatchObject(resSecond.body);
+      });
+
+      it('fails with status code 401 if the user is not logged in', async () => {
+        // Get the initial data of lists[0]
+        const resFirst = await api.get(`/api/v1.0/users/${initialUsers[0]._id}/lists/${initialUsers[0].lists[0]}`);
+
+        const newlist = {
+          name: `userNumber${initialUsers.length}`,
+          description: `A new list made by ${initialUsers[0].username}`,
+        };
+
+        // Check not logged in user
+        await api
+          .put(`/api/v1.0/users/${initialUsers[0]._id}/lists/${initialUsers[0].lists[0]}`)
+          .send({
+            name: newlist.name,
+            description: newlist.description,
+          }).expect(401)
+          .expect({
+            msg: 'You are not authorized to view this resource',
+          });
+
+        // To check the data is the same in db after all the failed attempts
+        const resSecond = await api.get(`/api/v1.0/users/${initialUsers[0]._id}/lists/${initialUsers[0].lists[0]}`);
+        expect(resFirst.body).toMatchObject(resSecond.body);
+      });
+    });
+
 });
 
 afterAll(async () => {
