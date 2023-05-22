@@ -1062,4 +1062,40 @@ usersRouter.put(
   },
 );
 
+// Delete list
+usersRouter.delete(
+  '/:id/lists/:listId',
+  isAuth,
+
+  async (request, response, next) => {
+    const session = await mongoose.connection.startSession();
+    try {
+      // Checks
+      const { user } = request;
+      // Check user and list exist and user is the owner of the list
+      const userDb = await User.findById(request.params.id);
+      if (!userDb) return response.status(404).json({ error: 'user no found' });
+      const list = await List.findById(request.params.listId);
+      if (!list) return response.status(404).json({ error: 'list no found' });
+      if (user.id !== request.params.id) return response.status(401).end();
+      if (user.id !== list.userId.toString()) return response.status(401).end();
+
+      // Start transaction
+      session.startTransaction();
+
+      userDb.lists.filter((itemList) => itemList.toString() !== list.id);
+      await userDb.save({ session });
+      await list.deleteOne({ session });
+      // Confirm transaction
+      await session.commitTransaction();
+      session.endSession();
+      response.status(204).end();
+    } catch (error) {
+      await session.abortTransaction();
+      session.endSession();
+      next(error);
+    }
+  },
+
+);
 module.exports = usersRouter;
