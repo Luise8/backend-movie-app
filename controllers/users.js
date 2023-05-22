@@ -700,9 +700,12 @@ usersRouter.get(
       const user = await User.findById(request.params.id).populate('photo', { image: 1 })
         .lean().exec();
 
-      // Get count
-      const list = await List.findById(request.params.listId)
-        .exec();
+      // Checks
+      // Check user and list exist and user is the owner of the list
+      if (!user) return response.status(404).json({ error: 'user no found' });
+      const list = await List.findById(request.params.listId).exec();
+      if (!list) return response.status(404).json({ error: 'list no found' });
+
       const count = list.movies.length;
       if (user && list) {
         if (request.user?.id !== user.id) {
