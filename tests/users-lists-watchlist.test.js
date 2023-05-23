@@ -678,6 +678,185 @@ describe('when there is initially some users and data in db', () => {
       });
     });
   });
+
+  describe('watchlist routes', () => {
+    beforeAll(async () => {
+      await addInitialMovies();
+      await addInitialUsers();
+      await addInitialReviews();
+      await addInitialRates();
+      await addInitialProfilePhotos();
+      await addInitialLists();
+    });
+
+    describe('get watchlist', () => {
+      beforeAll(async () => {
+        await addInitialWatchlists();
+      });
+      it('watchlist is returned as json', async () => {
+        // Login
+        await api
+          .post('/api/v1.0/auth/login')
+          .send({
+            username: initialUsers[0].username,
+            password: initialUsers[0].username, // The password is the same that username
+          });
+
+        await api.get(`/api/v1.0/users/${initialUsers[0]._id}/watchlist`).expect(200).expect('Content-Type', /application\/json/);
+      });
+
+      it('the amount of all movies is returned in the total property', async () => {
+        // Login
+        await api
+          .post('/api/v1.0/auth/login')
+          .send({
+            username: initialUsers[0].username,
+            password: initialUsers[0].username, // The password is the same that username
+          });
+
+        const response = await api.get(`/api/v1.0/users/${initialUsers[0]._id}/watchlist`);
+
+        // Movies added by this user to his watchlist.
+        const amountMovies = initialWatchlists
+          .filter((watchlist) => watchlist._id === initialUsers[0].watchlist);
+        expect(response.body.total).toBe(amountMovies[0].movies.length);
+      });
+
+      it('return the number of movies and data according to the result and query parameters page and pageSize and light=false', async () => {
+        // Login
+        await api
+          .post('/api/v1.0/auth/login')
+          .send({
+            username: initialUsers[0].username,
+            password: initialUsers[0].username, // The password is the same that username
+          });
+
+        const page = 1;
+        const pageSize = 1;
+
+        const initialResponse = await api.get(`/api/v1.0/users/${initialUsers[0]._id}/watchlist?page=${0}&pageSize=${pageSize}`);
+
+        const secondResponse = await api.get(`/api/v1.0/users/${initialUsers[0]._id}/watchlist?page=${page}&pageSize=${pageSize}`);
+
+        // To check each movie is only in one response
+        //  according to query parameters page and pageSize
+        initialResponse.body.results.forEach((movies) => {
+          expect(secondResponse.body.results).not.toContainEqual(movies);
+        });
+
+        const {
+          _id, photo, passwordHash, ...userSelected
+        } = initialUsers[0];
+        expect(secondResponse.body.results.length).toBeLessThan(pageSize + 1);
+        expect(secondResponse.body.page).toBe(page);
+        expect(secondResponse.body.prev_page).toContain(`page=${page - 1}`);
+
+        const next_page = (pageSize * (page + 1)) >= secondResponse.body.total ? '' : `page=${page + 1}`;
+
+        expect(secondResponse.body.next_page).toContain(next_page);
+
+        // Movie populate
+        expect(secondResponse.body.results[0].photo).toBeDefined();
+        expect(secondResponse.body.results[0].name).toBeDefined();
+        expect(secondResponse.body.results[0].release_date).toBeDefined();
+        expect(secondResponse.body.results[0].idTMDB).toBeDefined();
+        expect(secondResponse.body.results[0].rateAverage).toBeDefined();
+        expect(secondResponse.body.results[0].description).toBeDefined();
+        expect(secondResponse.body.results[0].rateCount).toBeDefined();
+        expect(secondResponse.body.results[0].rateValue).toBeDefined();
+        expect(secondResponse.body.results[0].date).toBeDefined();
+
+        expect(secondResponse.body.user_details).toEqual({
+          ...userSelected,
+          photo: null,
+          id: _id,
+        });
+      });
+
+      it('return the number of movies and data according to the result and query parameters page and pageSize and light=true', async () => {
+        // Login
+        await api
+          .post('/api/v1.0/auth/login')
+          .send({
+            username: initialUsers[0].username,
+            password: initialUsers[0].username, // The password is the same that username
+          });
+
+        const page = 1;
+        const pageSize = 1;
+
+        const initialResponse = await api.get(`/api/v1.0/users/${initialUsers[0]._id}/watchlist?page=${0}&pageSize=${pageSize}`);
+
+        const secondResponse = await api.get(`/api/v1.0/users/${initialUsers[0]._id}/watchlist?page=${page}&pageSize=${pageSize}&light=true`);
+
+        const {
+          _id, photo, passwordHash, ...userSelected
+        } = initialUsers[0];
+
+        expect(secondResponse.body.results).toHaveLength(secondResponse.body.total);
+        expect(secondResponse.body.page).not.toBeDefined();
+        expect(secondResponse.body.prev_page).not.toBeDefined();
+        expect(secondResponse.body.next_page).not.toBeDefined();
+        expect(secondResponse.body.page_size).not.toBeDefined();
+
+        // Movie populate light
+        expect(secondResponse.body.results[0].photo).toBeDefined();
+        expect(secondResponse.body.results[0].name).toBeDefined();
+        expect(secondResponse.body.results[0].release_date).toBeDefined();
+        expect(secondResponse.body.results[0].idTMDB).toBeDefined();
+        expect(secondResponse.body.results[0].rateAverage).toBeDefined();
+        expect(secondResponse.body.results[0].description).not.toBeDefined();
+        expect(secondResponse.body.results[0].rateCount).not.toBeDefined();
+        expect(secondResponse.body.results[0].rateValue).not.toBeDefined();
+        expect(secondResponse.body.results[0].date).not.toBeDefined();
+
+        expect(secondResponse.body.user_details).toEqual({
+          ...userSelected,
+          photo: null,
+          id: _id,
+        });
+      });
+
+      it('fails with statuscode 400 if the query parameters are invalid and return array with validator errors', async () => {
+        // Login
+        await api
+          .post('/api/v1.0/auth/login')
+          .send({
+            username: initialUsers[0].username,
+            password: initialUsers[0].username, // The password is the same that username
+          });
+
+        const page = 'one';
+        const pageSize = -5;
+        const light = 'yes';
+        const response = await api.get(`/api/v1.0/users/${initialUsers[0]._id}/watchlist?page=${page}&pageSize=${pageSize}&light=${light}`).expect(400);
+
+        expect(response.body.errors).toBeDefined();
+        expect(response.body.errors.length).toBeGreaterThan(0);
+      });
+
+      it('fails with statuscode 401 if the user logged in is not the owner of the watchlist', async () => {
+        // Login
+        await api
+          .post('/api/v1.0/auth/login')
+          .send({
+            username: initialUsers[1].username,
+            password: initialUsers[1].username, // The password is the same that username
+          });
+
+        const page = 1;
+        const pageSize = 1;
+        const light = 'false';
+        await api.get(`/api/v1.0/users/${initialUsers[0]._id}/watchlist?page=${page}&pageSize=${pageSize}&light=${light}`).expect(401);
+      });
+      it('fails with statuscode 401 if the user is not logged in', async () => {
+        const page = 1;
+        const pageSize = 1;
+        const light = '0';
+        await api.get(`/api/v1.0/users/${initialUsers[0]._id}/watchlist?page=${page}&pageSize=${pageSize}&light=${light}`).expect(401).expect({ msg: 'You are not authorized to view this resource' });
+      });
+    });
+
 });
 
 afterAll(async () => {

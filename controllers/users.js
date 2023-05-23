@@ -1101,4 +1101,129 @@ usersRouter.delete(
   },
 
 );
+
+// Get watchlist
+usersRouter.get(
+  '/:id/watchlist',
+  isAuth,
+  // Sanitization and validation
+  query('page')
+    .optional()
+    .trim()
+    .custom((value) => !/\s/.test(value))
+    .withMessage('No spaces are allowed in page')
+    .custom((value) => /^\d+$/.test(value))
+    .withMessage('page has non-numeric characters.'),
+  query('pageSize')
+    .optional()
+    .trim()
+    .custom((value) => !/\s/.test(value))
+    .withMessage('No spaces are allowed in pageSize')
+    .custom((value) => /^\d+$/.test(value))
+    .withMessage('pageSize has non-numeric characters.')
+    .customSanitizer((value) => {
+      if (Number(value) > 30) {
+        return 30;
+      } if (Number(value) === 0) {
+        return 10;
+      }
+      return value;
+    }),
+  query('light')
+    .optional()
+    .trim()
+    .isBoolean()
+    .withMessage('Must be true or false, or a number 1 to true and 0 to false'),
+  (req, res, next) => {
+    try {
+      const result = validationResult(req);
+      if (!result.isEmpty()) {
+        return res.status(400).json({ errors: result.array() });
+      }
+      return next();
+    } catch (error) {
+      return next(error);
+    }
+  },
+  async (request, response, next) => {
+    try {
+      const user = await User.findById(request.params.id).populate('photo', { image: 1 })
+        .lean().exec();
+
+      // Check user is the owner of the watchlist
+      if (!user) return response.status(404).json({ error: 'user no found' });
+      if (request.user?.id !== user.id) return response.status(401).end();
+      const watchlist = await Watchlist.findById(user.watchlist).exec();
+      if (!watchlist) return response.status(404).json({ error: 'watchlist no found' });
+
+      const count = watchlist.movies.length;
+
+      user.photo = user.photo.hasOwnProperty('image') ? `data:${user.photo.image.contentType};base64,${user.photo.image.data.toString('base64')}` : null;
+
+      // Get page and pageSize values
+      const pageSize = Number(request.query.pageSize) || 10;
+      const page = Number(request.query.page) || 0;
+
+      // Get ligth value
+      const light = request.query.light || false;
+
+      // Get number of prev page
+      let prevPage;
+      if (page === 0) {
+        prevPage = '';
+      } else if ((pageSize * (page - 1)) > count) {
+        if (Number.isInteger(count / pageSize)) {
+          prevPage = (count / pageSize) - 1;
+        } else {
+          prevPage = parseInt(count / pageSize, 10);
+        }
+      } else {
+        prevPage = page - 1;
+      }
+
+      const watchlistTotalIds = watchlist.movies;
+      let moviesArray;
+      if (light === 'true' || light === '1') {
+        moviesArray = await Watchlist.findById(user.watchlist)
+          .select('movies')
+          .populate({
+            path: 'movies',
+            select: {
+              name: 1, idTMDB: 1, photo: 1, rateAverage: 1, release_date: 1,
+            },
+          })
+          .exec();
+
+        return response.json({
+          user_details: user,
+          total: count,
+          watchlistTotalIds,
+          results: moviesArray.movies,
+          id: user.watchlist,
+        });
+      }
+      moviesArray = await Watchlist.findById(user.watchlist)
+        .select('movies')
+        .where('movies').slice([page * pageSize, pageSize])
+        .populate({
+          path: 'movies',
+        })
+        .exec();
+      return response.json({
+        user_details: user,
+        total: count,
+        page_size: pageSize,
+        page,
+        prev_page: page === 0 ? prevPage : `/movies?page=${prevPage}&page_size=${pageSize}`,
+        next_page: (pageSize * (page + 1)) < count ? `/movies?page=${page + 1}&page_size=${pageSize}` : '',
+        watchlistTotalIds,
+        id: watchlist.id,
+        results: moviesArray.movies,
+      });
+    } catch (error) {
+      next(error);
+    }
+  },
+);
+
 module.exports = usersRouter;

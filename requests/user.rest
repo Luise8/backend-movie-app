@@ -342,7 +342,12 @@ Content-Type: application/json
       "movies": "String"
 }
 
-###    // EDIT LIST USERNUMBER0 - USER WITH LISTS - WRONG MOVIES FIELD
+###    // DELETE LIST USERNUMBER0 - USER WITH LISTS - WRONG MOVIES FIELD
 DELETE http://localhost:3003/api/v1.0/users/64501354c41b5db06e01c5a4/lists/64502ae06dc338b6e80b8c58  HTTP/1.1
 
 
+###    // GET USER/WATCHLIST USERNUMBER0 
+GET http://localhost:3003/api/v1.0/users/64501354c41b5db06e01c5a4/watchlist/?light=1  HTTP/1.1
+
+###    // GET USER/WATCHLIST USERNUMBER0 
+GET http://localhost:3003/api/v1.0/users/64501354c41b5db06e01c5a4/watchlist/?page=0&pageSize=1&light=0  HTTP/1.1
