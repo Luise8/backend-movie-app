@@ -61,7 +61,7 @@ beforeEach(async () => {
     .post('/api/v1.0/auth/logout').send();
 });
 
-describe('when there is initially some users saved in db', () => {
+describe('when there is initially some users and data in db', () => {
   describe('lists routes', () => {
     beforeAll(async () => {
       await addInitialMovies();
@@ -150,7 +150,7 @@ describe('when there is initially some users saved in db', () => {
       it('the amount of all movies of one list is returned in the total property', async () => {
         const response = await api.get(`/api/v1.0/users/${initialUsers[0]._id}/lists/${initialUsers[0].lists[0]}`);
 
-        // Lists added by this user.
+        // Movies added by this user to this list.
         const amountMovies = initialLists
           .filter((list) => list._id === initialUsers[0].lists[0]);
         expect(response.body.total).toBe(amountMovies[0].movies.length);
@@ -164,10 +164,10 @@ describe('when there is initially some users saved in db', () => {
 
         const secondResponse = await api.get(`/api/v1.0/users/${initialUsers[0]._id}/lists/${initialUsers[0].lists[0]}?page=${page}&pageSize=${pageSize}`);
 
-        // To check each list item is only in one response
+        // To check each movie item is only in one response
         //  according to query parameters page and pageSize
-        initialResponse.body.results.forEach((listFirstResponse) => {
-          expect(secondResponse.body.results).not.toContainEqual(listFirstResponse);
+        initialResponse.body.results.forEach((movie) => {
+          expect(secondResponse.body.results).not.toContainEqual(movie);
         });
 
         const {
