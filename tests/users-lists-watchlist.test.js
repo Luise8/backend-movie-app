@@ -629,8 +629,7 @@ describe('when there is initially some users saved in db', () => {
 
         // Trying to delete list
         const res = await api
-          .delete(`/api/v1.0/users/${initialUsers[0]._id}/lists/${newList.id}`);// .expect(404);
-        console.log('🚀 ~ file: users-lists-watchlist.test.js:633 ~ it ~ res:', res);
+          .delete(`/api/v1.0/users/${initialUsers[0]._id}/lists/${newList.id}`).expect(404);
 
         // No list was removed from lists colletion
         const currentLists = await List.find().count();
@@ -671,6 +670,7 @@ describe('when there is initially some users saved in db', () => {
       // Check user not logged in
         await api
           .delete(`/api/v1.0/users/${initialUsers[0]._id}/lists/${initialUsers[0].lists[0]}`)
+          .expect(401)
           .expect({
             msg: 'You are not authorized to view this resource',
           });
