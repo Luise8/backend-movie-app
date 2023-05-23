@@ -67,7 +67,6 @@ describe('when there is initially some users saved in db', () => {
       await addInitialMovies();
       await addInitialReviews();
       await addInitialRates();
-      await addInitialUsers();
       await addInitialProfilePhotos();
       await addInitialWatchlists();
     });
@@ -75,6 +74,7 @@ describe('when there is initially some users saved in db', () => {
     describe('get lists', () => {
       beforeAll(async () => {
         await addInitialLists();
+        await addInitialUsers();
       });
       it('lists are returned as json', async () => {
         await api.get(`/api/v1.0/users/${initialUsers[0]._id}/lists`).expect(200).expect('Content-Type', /application\/json/);
@@ -141,6 +141,7 @@ describe('when there is initially some users saved in db', () => {
     describe('get one list', () => {
       beforeAll(async () => {
         await addInitialLists();
+        await addInitialUsers();
       });
       it('list is returned as json', async () => {
         await api.get(`/api/v1.0/users/${initialUsers[0]._id}/lists/${initialUsers[0].lists[0]}`).expect(200).expect('Content-Type', /application\/json/);
@@ -259,6 +260,7 @@ describe('when there is initially some users saved in db', () => {
     describe('create lists', () => {
       beforeEach(async () => {
         await addInitialLists();
+        await addInitialUsers();
       });
 
       it('succeeds with valid data', async () => {
@@ -332,6 +334,12 @@ describe('when there is initially some users saved in db', () => {
         expect(res.body.errors).toBeDefined();
         expect(res.body.errors.length).toBeGreaterThan(0);
 
+        // User after fails trying to create one list
+        const userAfter = await api.get(`/api/v1.0/users/${initialUsers[0]._id}/lists`);
+
+        // The list was not added to the user lists
+        expect(userAfter.body.total).toBe(initialUsers[0].lists.length);
+
         // The list was not added to the list collection
         const listCount = await List.find().count();
         expect(listCount).toBe(initialLists.length);
@@ -358,6 +366,12 @@ describe('when there is initially some users saved in db', () => {
             description: newlist.description,
           }).expect(401);
 
+        // User after fails trying to create one list
+        const userAfter = await api.get(`/api/v1.0/users/${initialUsers[0]._id}/lists`);
+
+        // The list was not added to the user lists
+        expect(userAfter.body.total).toBe(initialUsers[0].lists.length);
+
         // The list was not added to the list collection
         const listCount = await List.find().count();
         expect(listCount).toBe(initialLists.length);
@@ -378,6 +392,12 @@ describe('when there is initially some users saved in db', () => {
             msg: 'You are not authorized to view this resource',
           });
 
+        // User after fails trying to create one list
+        const userAfter = await api.get(`/api/v1.0/users/${initialUsers[0]._id}/lists`);
+
+        // The list was not added to the user lists
+        expect(userAfter.body.total).toBe(initialUsers[0].lists.length);
+
         // The list was not added to the list collection
         const listCount = await List.find().count();
         expect(listCount).toBe(initialLists.length);
@@ -385,6 +405,9 @@ describe('when there is initially some users saved in db', () => {
     });
 
     describe('edit lists', () => {
+      beforeAll(async () => {
+        await addInitialUsers();
+      });
       beforeEach(async () => {
         await addInitialLists();
       });
