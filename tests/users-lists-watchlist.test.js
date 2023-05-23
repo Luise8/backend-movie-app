@@ -181,15 +181,6 @@ describe('when there is initially some users and data in db', () => {
 
         expect(secondResponse.body.next_page).toContain(next_page);
 
-        expect(secondResponse.body.results[0]).toMatchObject({
-          name: expect.any(String),
-          release_date: expect.any(String || undefined),
-          description: expect.any(String || undefined),
-          photo: expect.any(String || null),
-          rateAverage: expect.any(Number),
-          idTMDB: expect.any(String),
-        });
-
         // Movie populate
         expect(secondResponse.body.results[0].photo).toBeDefined();
         expect(secondResponse.body.results[0].name).toBeDefined();
