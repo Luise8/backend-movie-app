@@ -332,7 +332,7 @@ usersRouter.delete('/:id', isAuth, async (request, response, next) => {
     // No owner of account
     if (userDb._id.toString() !== user._id.toString()) return response.status(401).end();
 
-    // Start session
+    // Start transaction
     session.startTransaction();
 
     await Review.deleteMany({ userId: userDb._id }).session(session);
@@ -981,7 +981,7 @@ usersRouter.put(
         });
       }
 
-      // Start session
+      // Start transaction
       session.startTransaction();
 
       // Check if there are some movies missing from mongodb
@@ -1311,7 +1311,7 @@ usersRouter.put(
         });
       }
 
-      // Start session
+      // Start transaction
       session.startTransaction();
 
       // Check if there are some movies missing from mongodb
