@@ -904,8 +904,10 @@ usersRouter.put(
     .optional()
     .isString()
     .bail()
-    .custom((value) => /^[a-z0-9]+$/i.test(value))
-    .withMessage('No valids movies.'),
+    .isLength({ max: 20 })
+    .bail()
+    .custom((value) => /^[0-9]+$/i.test(value))
+    .withMessage('No valid movies.'),
   async (request, response, next) => {
     try {
       const result = validationResult(request);
@@ -1027,7 +1029,11 @@ usersRouter.put(
           }
         }());
       } catch (error) {
-        throw Error('Invalid input');
+        await session.abortTransaction();
+        session.endSession();
+        return response.status(400).json({
+          error: 'Invalid inputs. Movies no found',
+        });
       }
 
       // Get id of new movies added to mongodb
