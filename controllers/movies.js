@@ -302,7 +302,7 @@ moviesRouter.post(
         const savedReview = await reviewToSave.save();
         await session.commitTransaction();
         session.endSession();
-        return response.json(savedReview);
+        return response.status(201).json(savedReview);
       }
 
       // Get error of TMDB to modify it
@@ -336,7 +336,7 @@ moviesRouter.post(
       await session.commitTransaction();
       session.endSession();
 
-      return response.json(savedReview);
+      return response.status(201).json(savedReview);
     } catch (exception) {
       await session.abortTransaction();
       session.endSession();
