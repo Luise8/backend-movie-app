@@ -1,4 +1,5 @@
 const moviesRouter = require('express').Router();
+const mongoose = require('mongoose');
 const axios = require('axios');
 const {
   body, validationResult, query,
@@ -236,5 +237,112 @@ moviesRouter.get('/:id/reviews/:idReview', async (request, response, next) => {
   }
 });
 
+// Create a review
+moviesRouter.post(
+  '/:id/reviews',
+  isAuth,
+  // Sanitization and validation
+  body('title')
+    .trim()
+    .customSanitizer((value) => value.replace(/\s{2,}/g, ' ')
+      .replace(/-{2,}/g, '-')
+      .replace(/'{2,}/g, '\'')
+      .replace(/\.{2,}/g, '.')
+      .replace(/,{2,}/g, ',')
+      .replace(/\?{2,}/g, '?'))
+    .isAlphanumeric('en-US', { ignore: ' -\'.,?' })
+    .withMessage('Title has no valid characters.')
+    .isLength({ min: 12, max: 175 })
+    .withMessage('Title must be specified with min 12 characters and max 175 characters'),
+  body('body')
+    .trim()
+    .customSanitizer((value) => value.replace(/\s{2,}/g, ' ')
+      .replace(/-{2,}/g, '-')
+      .replace(/'{2,}/g, '\'')
+      .replace(/\.{2,}/g, '.')
+      .replace(/,{2,}/g, ',')
+      .replace(/\?{2,}/g, '?'))
+    .isAlphanumeric('en-US', { ignore: ' -\'.,?' })
+    .withMessage('Description has no valid characters.')
+    .isLength({ min: 400, max: 10000 })
+    .withMessage('Body must be specified with min 400 characters and max 10000 characters'),
+  async (request, response, next) => {
+    try {
+      const result = validationResult(request);
+      if (!result.isEmpty()) {
+        return response.status(400).json({ errors: result.array() });
+      }
+      return next();
+    } catch (error) {
+      return next(error);
+    }
+  },
+  async (request, response, next) => {
+    const session = await mongoose.connection.startSession();
+    try {
+      // Start transaction
+      session.startTransaction();
+      const { user } = request;
+
+      const movie = await Movie.findOne({ idTMDB: request.params.id });
+      if (movie) {
+        const isCreated = await Review.find({ userId: request.user.id, movieId: movie.id });
+        if (isCreated) {
+          await session.abortTransaction();
+          session.endSession();
+          return response.status(409).json({ message: 'Already created' });
+        }
+        const reviewToSave = new Review({
+          title: request.body.title,
+          body: request.body.body,
+          date: new Date(),
+          movieId: movie.id,
+          userId: user.id,
+        });
+        const savedReview = await reviewToSave.save();
+        await session.commitTransaction();
+        session.endSession();
+        return response.json(savedReview);
+      }
+
+      // Get error of TMDB to modify it
+      let responseTMDB;
+      try {
+        responseTMDB = await axios.get(config.URL_FIND_ONE_MOVIE(request.params.id));
+      } catch (error) {
+        // If the movie does not exist in TMDB
+        await session.abortTransaction();
+        session.endSession();
+        return response.status(400).json({
+          error: 'Invalid input. Movie no found',
+        });
+      }
+
+      const newMovie = takeMovieData(responseTMDB.data);
+      const movieToSave = new Movie({
+        ...newMovie,
+      }, { session });
+      const savedMovie = await movieToSave.save();
+      const reviewToSave = new Review({
+        title: request.body.title,
+        body: request.body.body,
+        date: new Date(),
+        movieId: savedMovie.id,
+        userId: user.id,
+      }, { session });
+      const savedReview = await reviewToSave.save({ session });
+
+      // Confirm transaction
+      await session.commitTransaction();
+      session.endSession();
+
+      return response.json(savedReview);
+    } catch (exception) {
+      await session.abortTransaction();
+      session.endSession();
+      next(exception);
+    }
+  },
+);
 
 module.exports = moviesRouter;
