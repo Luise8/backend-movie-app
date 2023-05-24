@@ -21,5 +21,11 @@ GET http://localhost:3003/api/v1.0/movies/9799/reviews/64493b16236a412ea5eb6550 
 ###   // One review of one movie with WRONG id of review
 GET http://localhost:3003/api/v1.0/movies/9799/reviews/64493b16236a412ea5eb6559 HTTP/1.1
 
-###   // One review of one movie with wrong id of review
-GET http://localhost:3003/api/movies/985445/reviews/64493b16236a412ea5eb6550 HTTP/1.1
+###   // Add one review
+POST http://localhost:3003/api/v1.0/movies/343622/reviews
+Content-Type: application/json
+
+{
+  "title": "Title of review 1",
+  "body": "Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Aenean commodo ligula eget dolor. Aenean massa. Cum sociis natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus. Donec quam felis, ultricies nec, pellentesque eu, pretium quis, sem. Nulla consequat massa quis enim. Donec pede justo, fringilla vel, aliquet nec, vulputate eget, arcu. In enim justo, rhoncus ut, imperdiet a, venenati"
+}
