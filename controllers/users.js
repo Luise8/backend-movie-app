@@ -817,8 +817,8 @@ usersRouter.post(
       .replace(/\?{2,}/g, '?'))
     .isAlphanumeric('en-US', { ignore: ' -\'.,?' })
     .withMessage('Name has no valid characters.')
-    .isLength({ min: 12 })
-    .withMessage('Name must be specified with min 12 characters'),
+    .isLength({ min: 12, max: 175 })
+    .withMessage('Title must be specified with min 12 characters and max 175 characters'),
   body('description')
     .optional()
     .trim()
@@ -829,7 +829,9 @@ usersRouter.post(
       .replace(/,{2,}/g, ',')
       .replace(/\?{2,}/g, '?'))
     .isAlphanumeric('en-US', { ignore: ' -\'.,?' })
-    .withMessage('Description has no valid characters.'),
+    .withMessage('Description has no valid characters.')
+    .isLength({ max: 300 })
+    .withMessage('Descripton must have max 300 characters'),
   async (request, response, next) => {
     try {
       const result = validationResult(request);
@@ -883,8 +885,8 @@ usersRouter.put(
       .replace(/\?{2,}/g, '?'))
     .isAlphanumeric('en-US', { ignore: ' -\'.,?' })
     .withMessage('Name has no valid characters.')
-    .isLength({ min: 12 })
-    .withMessage('Name must be specified with min 12 characters'),
+    .isLength({ min: 12, max: 175 })
+    .withMessage('Title must be specified with min 12 characters and max 175 characters'),
   body('description')
     .optional()
     .trim()
@@ -895,7 +897,9 @@ usersRouter.put(
       .replace(/,{2,}/g, ',')
       .replace(/\?{2,}/g, '?'))
     .isAlphanumeric('en-US', { ignore: ' -\'.,?' })
-    .withMessage('Description has no valid characters.'),
+    .withMessage('Description has no valid characters.')
+    .isLength({ max: 300 })
+    .withMessage('Descripton must have max 300 characters'),
   body('movies')
     .optional()
     .isArray({ max: 100 })
