@@ -164,11 +164,14 @@ describe('when there is initially some users and data in db', () => {
 
         const secondResponse = await api.get(`/api/v1.0/users/${initialUsers[0]._id}/lists/${initialUsers[0].lists[0]}?page=${page}&pageSize=${pageSize}`);
 
-        // To check each movie item is only in one response
+        // Check that each movie is on the corresponding page and order
         //  according to query parameters page and pageSize
-        initialResponse.body.results.forEach((movie) => {
-          expect(secondResponse.body.results).not.toContainEqual(movie);
-        });
+        const userList = initialLists
+          .filter((list) => list._id === initialUsers[0].lists[0])[0];
+        const moviesFirst = initialResponse.body.results.map((movie) => movie.id);
+        const moviesSecond = secondResponse.body.results.map((movie) => movie.id);
+        expect(userList.movies.slice(0, 0 + pageSize)).toEqual(moviesFirst);
+        expect(userList.movies.slice(page, page + pageSize)).toEqual(moviesSecond);
 
         const {
           _id, photo, watchlist, passwordHash, ...userSelected
@@ -738,11 +741,14 @@ describe('when there is initially some users and data in db', () => {
 
         const secondResponse = await api.get(`/api/v1.0/users/${initialUsers[0]._id}/watchlist?page=${page}&pageSize=${pageSize}`);
 
-        // To check each movie is only in one response
+        // Check that each movie is on the corresponding page and order
         //  according to query parameters page and pageSize
-        initialResponse.body.results.forEach((movies) => {
-          expect(secondResponse.body.results).not.toContainEqual(movies);
-        });
+        const userWatchlist = initialWatchlists
+          .filter((watchlist) => watchlist._id === initialUsers[0].watchlist)[0];
+        const moviesFirst = initialResponse.body.results.map((movie) => movie.id);
+        const moviesSecond = secondResponse.body.results.map((movie) => movie.id);
+        expect(userWatchlist.movies.slice(0, 0 + pageSize)).toEqual(moviesFirst);
+        expect(userWatchlist.movies.slice(page, page + pageSize)).toEqual(moviesSecond);
 
         const {
           _id, photo, passwordHash, ...userSelected
