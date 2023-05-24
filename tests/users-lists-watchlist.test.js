@@ -857,6 +857,140 @@ describe('when there is initially some users and data in db', () => {
       });
     });
 
+    describe('edit watchlist', () => {
+      beforeEach(async () => {
+        await addInitialWatchlists();
+      });
+
+      it('successful with return of new watchlist data', async () => {
+        // Login
+        await api
+          .post('/api/v1.0/auth/login')
+          .send({
+            username: initialUsers[0].username,
+            password: initialUsers[0].username, // The password is the same that username
+          });
+
+        const newWatchlist = {
+          movies: [
+            initialMovies[0].idTMDB,
+            initialMovies[1].idTMDB,
+          ],
+        };
+
+        const resUpdate = await api
+          .put(`/api/v1.0/users/${initialUsers[0]._id}/watchlist`)
+          .send({
+            movies: newWatchlist.movies,
+          })
+          .expect(200);
+
+        // Right response with new data
+        expect(resUpdate.body).toMatchObject({
+          id: initialUsers[0].watchlist,
+          movies: [
+            initialMovies[0]._id,
+            initialMovies[1]._id,
+          ],
+        });
+
+        // To check the data was update in db
+        const resWatchlistUpdated = await api.get(`/api/v1.0/users/${initialUsers[0]._id}/watchlist`);
+
+        expect(resWatchlistUpdated.body).toMatchObject({
+          id: initialUsers[0].watchlist,
+          total: newWatchlist.movies.length,
+          watchlistTotalIds: [
+            initialMovies[0]._id,
+            initialMovies[1]._id,
+          ],
+        });
+      });
+
+      it('fails with status code 400 if the inputs are invalids', async () => {
+        // Login
+        await api
+          .post('/api/v1.0/auth/login')
+          .send({
+            username: initialUsers[0].username,
+            password: initialUsers[0].username, // The password is the same that username
+          });
+
+        // Get the initial data of watchlist
+        const resFirst = await api.get(`/api/v1.0/users/${initialUsers[0]._id}/watchlist`);
+
+        const newWatchlist = {
+          movies: ['leitmotiv'],
+        };
+
+        const resUpdate = await api
+          .put(`/api/v1.0/users/${initialUsers[0]._id}/watchlist`)
+          .send({
+            movies: newWatchlist.movies,
+          }).expect(400);
+
+        expect(resUpdate.body.errors).toBeDefined();
+        expect(resUpdate.body.errors.length).toBeGreaterThan(0);
+
+        // To check the data is the same in db after all the failed attempts
+        const resSecond = await api.get(`/api/v1.0/users/${initialUsers[0]._id}/watchlist`);
+        expect(resFirst.body).toMatchObject(resSecond.body);
+      });
+
+      it('fails with status code 401 if the user is not the owner of the account', async () => {
+        // Get the initial data of watchlist
+        const resFirst = await api.get(`/api/v1.0/users/${initialUsers[0]._id}/watchlist`);
+
+        // Another user
+        // Login
+        await api
+          .post('/api/v1.0/auth/login')
+          .send({
+            username: initialUsers[1].username,
+            password: initialUsers[1].username, // The password is the same that username
+          });
+
+        const newWatchlist = {
+          movies: [initialMovies[0].idTMDB],
+        };
+
+        // Check not authorize user
+        await api
+          .put(`/api/v1.0/users/${initialUsers[0]._id}/watchlist`)
+          .send({
+            movies: newWatchlist.movies,
+          }).expect(401);
+
+        // To check the data is the same in db after all the failed attempts
+        const resSecond = await api.get(`/api/v1.0/users/${initialUsers[0]._id}/watchlist`);
+        expect(resFirst.body).toMatchObject(resSecond.body);
+      });
+
+      it('fails with status code 401 if the user is not logged in', async () => {
+        // Get the initial data of watchlist
+        const resFirst = await api.get(`/api/v1.0/users/${initialUsers[0]._id}/watchlist`);
+
+        const newWatchlist = {
+          movies: [initialMovies[0].idTMDB],
+        };
+
+        // Check not logged in user
+        await api
+          .put(`/api/v1.0/users/${initialUsers[0]._id}/watchlist`)
+          .send({
+            name: newWatchlist.name,
+            description: newWatchlist.description,
+          }).expect(401)
+          .expect({
+            msg: 'You are not authorized to view this resource',
+          });
+
+        // To check the data is the same in db after all the failed attempts
+        const resSecond = await api.get(`/api/v1.0/users/${initialUsers[0]._id}/watchlist`);
+        expect(resFirst.body).toMatchObject(resSecond.body);
+      });
+    });
+  });
 });
 
 afterAll(async () => {

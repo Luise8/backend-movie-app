@@ -1226,4 +1226,173 @@ usersRouter.get(
   },
 );
 
+// Edit watchlist
+usersRouter.put(
+  '/:id/watchlist',
+  isAuth,
+  // Sanitization and validation
+  body('movies')
+    .isArray({ max: 100 })
+    .withMessage('Movies must be defined and be an array with max length of 100 movies'),
+  body('movies[*]')
+    .optional()
+    .isString()
+    .bail()
+    .isLength({ max: 20 })
+    .bail()
+    .custom((value) => /^[0-9]+$/i.test(value))
+    .withMessage('No valid movies.'),
+  async (request, response, next) => {
+    try {
+      const result = validationResult(request);
+      if (!result.isEmpty()) {
+        return response.status(400).json({ errors: result.array() });
+      }
+      return next();
+    } catch (error) {
+      return next(error);
+    }
+  },
+  async (request, response, next) => {
+    try {
+      // Checks
+      const { user } = request;
+      // Check user and list exist and user is the owner of the list
+      const userDb = await User.findById(request.params.id);
+      if (!userDb) return response.status(404).json({ error: 'user no found' });
+      const watchlist = await Watchlist.findById(user.watchlist);
+      if (!watchlist) return response.status(404).json({ error: 'watchlist no found' });
+      if (user.id !== request.params.id) return response.status(401).end();
+      if (user.id !== watchlist.userId.toString()) return response.status(401).end();
+      next();
+    } catch (error) {
+      next(error);
+    }
+  },
+  async (request, response, next) => {
+    const session = await mongoose.connection.startSession();
+
+    try {
+      const { user } = request;
+      let { movies } = request.body;
+      const watchlist = await Watchlist.findById(user.watchlist).exec();
+
+      // If the movies parameter is an empty array
+      if (movies?.length === 0) {
+        watchlist.movies = [];
+        session.endSession();
+        await watchlist.save();
+        return response.json(watchlist);
+      }
+
+      // If the movies parameter is defined then handle this
+
+      // Get matching movies
+      const moviesInDb = await Movie.find({ idTMDB: movies }).exec();
+
+      // Apply changes to differentiate between found and missing movies
+      if (moviesInDb) {
+        movies = movies.map((movie) => {
+          const movieFound = moviesInDb.find((elem) => elem.idTMDB === movie);
+          if (movieFound !== undefined) {
+            return { [movie]: movieFound.id };
+          }
+          return movie;
+        });
+      }
+
+      // Start session
+      session.startTransaction();
+
+      // Check if there are some movies missing from mongodb
+      const moviesToFind = movies.filter((item, index, array) => {
+        if (typeof item === 'object') return false;
+        return array.indexOf(item) === index;
+      }).map((item) => item);
+
+      // No movies missing, so we got all of the movies from our mongodb
+      if (moviesToFind.length === 0) {
+        // Get array of ObjectId of movies
+        movies = movies.map((movie) => {
+          if (typeof movie === 'object') {
+            return Object.values(movie)[0];
+          }
+          throw new Error('Invalid input');
+        });
+
+        // Add new movies
+        watchlist.movies = movies;
+        // Save watchlist
+        await watchlist.save({
+          session,
+        });
+
+        // Confirm transaction
+        await session.commitTransaction();
+        session.endSession();
+        return response.json(watchlist);
+      }
+
+      // Movies missing, so we need to get movies from TMDB
+      // Get error of TMDB to modify message of error
+      try {
+      // Get movies from TMDB
+        await (async function setNewMoviesFromTMDB() {
+          // eslint-disable-next-line no-restricted-syntax
+          for (let movie of moviesToFind) {
+            const responseTMDB = await axios.get(config.URL_FIND_ONE_MOVIE(movie));
+            if (responseTMDB.data) {
+              const newMovie = takeMovieData(responseTMDB.data);
+              const movieToSave = new Movie({
+                ...newMovie,
+              }, { session });
+
+              await movieToSave.save({ session });
+              movie = movieToSave ? { [movie]: movieToSave._id.toString() } : movie;
+            }
+          }
+        }());
+      } catch (error) {
+        await session.abortTransaction();
+        session.endSession();
+        return response.status(400).json({
+          error: 'Invalid inputs. Movies no found',
+        });
+      }
+
+      // Get id of new movies added to mongodb
+      const restMovies = await Movie.find({ idTMDB: moviesToFind }).session(session);
+
+      // Get array of ObjectId of movies
+      movies = movies.map((movie) => {
+        if (typeof movie === 'object') {
+          return Object.values(movie)[0];
+        }
+        // Here movie is a string
+        const movieFound = restMovies.find((elem) => elem.idTMDB === movie);
+        if (movieFound !== undefined) {
+          return movieFound.id;
+        }
+        throw new Error('Invalid input');
+      });
+
+      // Add new movies
+      watchlist.movies = movies;
+      // Save watchlist
+      await watchlist.save({
+        session,
+      });
+
+      // Confirm transaction
+      await session.commitTransaction();
+      session.endSession();
+      return response.json(watchlist);
+    } catch (error) {
+      await session.abortTransaction();
+      session.endSession();
+      next(error);
+    }
+  },
+);
+
 module.exports = usersRouter;

@@ -351,3 +351,28 @@ GET http://localhost:3003/api/v1.0/users/64501354c41b5db06e01c5a4/watchlist/?lig
 
 ###    // GET USER/WATCHLIST USERNUMBER0 
 GET http://localhost:3003/api/v1.0/users/64501354c41b5db06e01c5a4/watchlist/?page=0&pageSize=1&light=0  HTTP/1.1
+
+
+###    // EDIT WATCHLIST USERNUMBER0 
+PUT http://localhost:3003/api/v1.0/users/64501354c41b5db06e01c5a4/watchlist/  HTTP/1.1
+Content-Type: application/json
+
+{
+      "movies": ["13804", "82992", "584", "77959", "675353", "675353"]
+}
+
+###    // EDIT WATCHLIST USERNUMBER0 - EMPTY ARRAY
+PUT http://localhost:3003/api/v1.0/users/64501354c41b5db06e01c5a4/watchlist/  HTTP/1.1
+Content-Type: application/json
+
+{
+      "movies": []
+}
+
+###    // EDIT WATCHLIST USERNUMBER0 - WRONG MOVIES FIELD
+PUT http://localhost:3003/api/v1.0/users/64501354c41b5db06e01c5a4/watchlist/  HTTP/1.1
+Content-Type: application/json
+
+{
+      "movies": ["46468754654646546547"]
+}
