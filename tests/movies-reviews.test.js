@@ -17,6 +17,7 @@ const {
   addInitialProfilePhotos,
   addInitialMovies,
   addInitialReviews,
+  nonExistingId,
 } = require('./test-db-helper');
 const Review = require('../models/review');
 const moviesRouter = require('../controllers/movies');
@@ -156,7 +157,7 @@ describe('when there is initially some movies and reviews saved in db', () => {
   });
 
   // Create reviews
-  describe.only('create reviews', () => {
+  describe('create reviews', () => {
     beforeEach(async () => {
       // To remove the session after every test
       await api
@@ -307,6 +308,172 @@ describe('when there is initially some movies and reviews saved in db', () => {
       // A new review was added only one time to the reviews collection
       const newListCReview = await Review.find().count();
       expect(newListCReview).toBe(initialReviews.length + 1);
+    });
+  });
+
+  // Edit reviews
+  describe('edit review', () => {
+    beforeAll(async () => {
+      await addInitialMovies();
+    });
+    beforeEach(async () => {
+      // To remove the session after every test
+      await api
+        .post('/api/v1.0/auth/logout').send();
+      await addInitialReviews();
+    });
+    it('succeeds with valid data', async () => {
+      // Login
+      await api
+        .post('/api/v1.0/auth/login')
+        .send({
+          username: initialUsers[0].username,
+          password: initialUsers[0].username, // The password is the same that username
+        });
+
+      const newReview = {
+        title: `Title of the review changed by ${initialUsers[0].username}`,
+        body: 'Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Aenean commodo ligula eget dolor. Aenean massa. Cum sociis natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus. Donec quam felis, ultricies nec, pellentesque eu, pretium quis, sem. Nulla consequat massa quis enim. Donec pede justo, fringilla vel, aliquet nec, vulputate eget, arcu. In enim justo, rhoncus ut, imperdiet a, venenatifelis, ultricies nec, pellentesque eu, pretium quis, sem. Nulla consequat massa quis enim. Donec pede justo, fringilla vel, aliquet nec, vulputate eget, arcu. In enim justo, rhoncus ut, imperdiet a, venenati',
+      };
+
+      const reviewToChange = initialReviews
+        .find((item) => item.userId === initialUsers[0]._id
+          && initialMovies[0]._id === item.movieId);
+
+      const res = await api
+        .put(`/api/v1.0/movies/${initialMovies[0].idTMDB}/reviews/${reviewToChange._id}`)
+        .send({
+          title: newReview.title,
+          body: newReview.body,
+        }).expect(200);
+
+      // The info of the review changed
+      expect(res.body).toMatchObject({
+        userId: `${initialUsers[0]._id}`,
+        movieId: `${initialMovies[0]._id}`,
+        date: expect.any(String),
+        title: newReview.title,
+        body: newReview.body,
+      });
+
+      // Check the data changed in the db
+      const reviewsMovie = await api.get(`/api/v1.0/movies/${initialMovies[0].idTMDB}/reviews/${reviewToChange._id}`);
+
+      expect(reviewsMovie.body).toMatchObject({
+        title: newReview.title,
+        body: newReview.body,
+      });
+    });
+    it('fails with status code 404 if the movie does not exist', async () => {
+      // Login
+      await api
+        .post('/api/v1.0/auth/login')
+        .send({
+          username: initialUsers[0].username,
+          password: initialUsers[0].username, // The password is the same that username
+        });
+
+      const newReview = {
+        title: `Title of the review changed by ${initialUsers[0].username}`,
+        body: 'Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Aenean commodo ligula eget dolor. Aenean massa. Cum sociis natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus. Donec quam felis, ultricies nec, pellentesque eu, pretium quis, sem. Nulla consequat massa quis enim. Donec pede justo, fringilla vel, aliquet nec, vulputate eget, arcu. In enim justo, rhoncus ut, imperdiet a, venenatifelis, ultricies nec, pellentesque eu, pretium quis, sem. Nulla consequat massa quis enim. Donec pede justo, fringilla vel, aliquet nec, vulputate eget, arcu. In enim justo, rhoncus ut, imperdiet a, venenati',
+      };
+
+      const reviewToChange = initialReviews
+        .find((item) => item.userId === initialUsers[0]._id
+          && initialMovies[0]._id === item.movieId);
+
+      const initialReviewMovie = await api.get(`/api/v1.0/movies/${initialMovies[0].idTMDB}/reviews/${reviewToChange._id}`);
+
+      await api
+        .put(`/api/v1.0/movies/0/reviews/${reviewToChange._id}`)
+        .send({
+          title: newReview.title,
+          body: newReview.body,
+        }).expect(404);
+
+      // Check the data was not changed in the db
+      const reviewMovie = await api.get(`/api/v1.0/movies/${initialMovies[0].idTMDB}/reviews/${reviewToChange._id}`);
+
+      expect(reviewMovie.body).toEqual(initialReviewMovie.body);
+    });
+    it('fails with status code 404 if the review does not exist', async () => {
+      // Login
+      await api
+        .post('/api/v1.0/auth/login')
+        .send({
+          username: initialUsers[0].username,
+          password: initialUsers[0].username, // The password is the same that username
+        });
+
+      const newReview = {
+        title: `Title of the review changed by ${initialUsers[0].username}`,
+        body: 'Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Aenean commodo ligula eget dolor. Aenean massa. Cum sociis natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus. Donec quam felis, ultricies nec, pellentesque eu, pretium quis, sem. Nulla consequat massa quis enim. Donec pede justo, fringilla vel, aliquet nec, vulputate eget, arcu. In enim justo, rhoncus ut, imperdiet a, venenatifelis, ultricies nec, pellentesque eu, pretium quis, sem. Nulla consequat massa quis enim. Donec pede justo, fringilla vel, aliquet nec, vulputate eget, arcu. In enim justo, rhoncus ut, imperdiet a, venenati',
+      };
+
+      const validNonexistingId = await nonExistingId('review');
+      await api
+        .put(`/api/v1.0/movies/${initialMovies[0].idTMDB}/reviews/${validNonexistingId}`)
+        .send({
+          title: newReview.title,
+          body: newReview.body,
+        }).expect(404);
+    });
+    it('fails with status code 401 if the user is not the owner of the review', async () => {
+      // Login
+      await api
+        .post('/api/v1.0/auth/login')
+        .send({
+          username: initialUsers[1].username,
+          password: initialUsers[1].username, // The password is the same that username
+        });
+
+      const newReview = {
+        title: `Title of the review changed by ${initialUsers[1].username}`,
+        body: 'Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Aenean commodo ligula eget dolor. Aenean massa. Cum sociis natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus. Donec quam felis, ultricies nec, pellentesque eu, pretium quis, sem. Nulla consequat massa quis enim. Donec pede justo, fringilla vel, aliquet nec, vulputate eget, arcu. In enim justo, rhoncus ut, imperdiet a, venenatifelis, ultricies nec, pellentesque eu, pretium quis, sem. Nulla consequat massa quis enim. Donec pede justo, fringilla vel, aliquet nec, vulputate eget, arcu. In enim justo, rhoncus ut, imperdiet a, venenati',
+      };
+
+      // Review made by one user different, userNumber0
+      const reviewToChange = initialReviews
+        .find((item) => item.userId === initialUsers[0]._id
+          && initialMovies[0]._id === item.movieId);
+
+      const initialReviewMovie = await api.get(`/api/v1.0/movies/${initialMovies[0].idTMDB}/reviews/${reviewToChange._id}`);
+
+      await api
+        .put(`/api/v1.0/movies/${initialMovies[0].idTMDB}/reviews/${reviewToChange._id}`)
+        .send({
+          title: newReview.title,
+          body: newReview.body,
+        }).expect(401);
+
+      // Check the data was not changed in the db
+      const reviewMovie = await api.get(`/api/v1.0/movies/${initialMovies[0].idTMDB}/reviews/${reviewToChange._id}`);
+
+      expect(reviewMovie.body).toEqual(initialReviewMovie.body);
+    });
+    it('fails with status code 401 if the user is not logged in', async () => {
+      const newReview = {
+        title: `Title of the review changed by ${initialUsers[0].username}`,
+        body: 'Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Aenean commodo ligula eget dolor. Aenean massa. Cum sociis natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus. Donec quam felis, ultricies nec, pellentesque eu, pretium quis, sem. Nulla consequat massa quis enim. Donec pede justo, fringilla vel, aliquet nec, vulputate eget, arcu. In enim justo, rhoncus ut, imperdiet a, venenatifelis, ultricies nec, pellentesque eu, pretium quis, sem. Nulla consequat massa quis enim. Donec pede justo, fringilla vel, aliquet nec, vulputate eget, arcu. In enim justo, rhoncus ut, imperdiet a, venenati',
+      };
+
+      const reviewToChange = initialReviews
+        .find((item) => item.userId === initialUsers[0]._id
+          && initialMovies[0]._id === item.movieId);
+
+      const initialReviewMovie = await api.get(`/api/v1.0/movies/${initialMovies[0].idTMDB}/reviews/${reviewToChange._id}`);
+
+      await api
+        .put(`/api/v1.0/movies/0/reviews/${reviewToChange._id}`)
+        .send({
+          title: newReview.title,
+          body: newReview.body,
+        }).expect(401);
+
+      // Check the data was not changed in the db
+      const reviewMovie = await api.get(`/api/v1.0/movies/${initialMovies[0].idTMDB}/reviews/${reviewToChange._id}`);
+
+      expect(reviewMovie.body).toEqual(initialReviewMovie.body);
     });
   });
 });

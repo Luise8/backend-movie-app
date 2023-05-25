@@ -345,4 +345,74 @@ moviesRouter.post(
   },
 );
 
+// Edit review
+moviesRouter.put(
+  '/:id/reviews/:reviewId',
+  isAuth,
+  // Sanitization and validation
+  body('title')
+    .optional()
+    .trim()
+    .customSanitizer((value) => value.replace(/\s{2,}/g, ' ')
+      .replace(/-{2,}/g, '-')
+      .replace(/'{2,}/g, '\'')
+      .replace(/\.{2,}/g, '.')
+      .replace(/,{2,}/g, ',')
+      .replace(/\?{2,}/g, '?'))
+    .isAlphanumeric('en-US', { ignore: ' -\'.,?' })
+    .withMessage('Title has no valid characters.')
+    .isLength({ min: 12, max: 175 })
+    .withMessage('Title must be specified with min 12 characters and max 175 characters'),
+  body('body')
+    .optional()
+    .trim()
+    .customSanitizer((value) => value.replace(/\s{2,}/g, ' ')
+      .replace(/-{2,}/g, '-')
+      .replace(/'{2,}/g, '\'')
+      .replace(/\.{2,}/g, '.')
+      .replace(/,{2,}/g, ',')
+      .replace(/\?{2,}/g, '?'))
+    .isAlphanumeric('en-US', { ignore: ' -\'.,?' })
+    .withMessage('Description has no valid characters.')
+    .isLength({ min: 400, max: 10000 })
+    .withMessage('Body must be specified with min 400 characters and max 10000 characters'),
+  async (request, response, next) => {
+    try {
+      const result = validationResult(request);
+      if (!result.isEmpty()) {
+        return response.status(400).json({ errors: result.array() });
+      }
+      return next();
+    } catch (error) {
+      return next(error);
+    }
+  },
+  async (request, response, next) => {
+    try {
+      const { user } = request;
+
+      const movie = await Movie.findOne({ idTMDB: request.params.id });
+      if (!movie) {
+        return response.status(404).json({ error: 'Invalid input. Movie no found' });
+      }
+
+      const review = await Review
+        .findOne({ movieId: movie.id, _id: request.params.reviewId });
+      if (!review) {
+        return response.status(404).json({ error: 'Invalid input. Review no found' });
+      }
+
+      if (user.id !== review.userId.toString()) return response.status(401).json();
+
+      if (request.body.title) review.title = request.body.title;
+      if (request.body.body) review.body = request.body.body;
+
+      const savedReview = await review.save();
+      return response.json(savedReview);
+    } catch (error) {
+      next(error);
+    }
+  },
+);
+
 module.exports = moviesRouter;
