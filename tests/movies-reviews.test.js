@@ -199,8 +199,8 @@ describe('when there is initially some movies and reviews saved in db', () => {
       });
 
       // A new review was added to the reviews collection
-      const newListCReview = await Review.find().count();
-      expect(newListCReview).toBe(initialReviews.length + 1);
+      const newListReview = await Review.find().count();
+      expect(newListReview).toBe(initialReviews.length + 1);
 
       const reviewsMovie = await api.get(`/api/v1.0/movies/${initialMovies[10].idTMDB}/reviews`);
 
@@ -231,8 +231,8 @@ describe('when there is initially some movies and reviews saved in db', () => {
         }).expect(404);
 
       // A new review was not added to the reviews collection
-      const newListCReview = await Review.find().count();
-      expect(newListCReview).toBe(initialReviews.length);
+      const newListReview = await Review.find().count();
+      expect(newListReview).toBe(initialReviews.length);
     });
     it('fails with status code 401 if the user is not logged in', async () => {
       const newReview = {
@@ -247,8 +247,8 @@ describe('when there is initially some movies and reviews saved in db', () => {
         }).expect(401);
 
       // A new review was not added to the reviews collection
-      const newListCReview = await Review.find().count();
-      expect(newListCReview).toBe(initialReviews.length);
+      const newListReview = await Review.find().count();
+      expect(newListReview).toBe(initialReviews.length);
     });
     it('fails with status code 400 if the inputs are invalids', async () => {
       // Login
@@ -275,8 +275,8 @@ describe('when there is initially some movies and reviews saved in db', () => {
       expect(resUpdate.body.errors.length).toBeGreaterThan(0);
 
       // A new review was not added to the reviews collection
-      const newListCReview = await Review.find().count();
-      expect(newListCReview).toBe(initialReviews.length);
+      const newListReview = await Review.find().count();
+      expect(newListReview).toBe(initialReviews.length);
     });
     it('fails with status code 409 if the user has already created a review for a movie', async () => {
       // Login
