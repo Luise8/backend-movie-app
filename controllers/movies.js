@@ -286,7 +286,7 @@ moviesRouter.post(
 
       const movie = await Movie.findOne({ idTMDB: request.params.id });
       if (movie) {
-        const isCreated = await Review.find({ userId: request.user.id, movieId: movie.id });
+        const isCreated = await Review.findOne({ userId: request.user.id, movieId: movie.id });
         if (isCreated) {
           await session.abortTransaction();
           session.endSession();
