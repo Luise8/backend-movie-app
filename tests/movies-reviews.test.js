@@ -49,6 +49,7 @@ beforeAll(async () => {
 const api = request.agent(app);
 
 describe('when there is initially some movies and reviews saved in db', () => {
+  // Get reviews
   describe('getting some reviews', () => {
     beforeAll(async () => {
       await addInitialMovies(); // Add 16 movies
@@ -114,6 +115,8 @@ describe('when there is initially some movies and reviews saved in db', () => {
       expect(response.body.results[0]._id).not.toBeDefined();
     });
   });
+
+  // Get one review
   describe('viewing a specific review', () => {
     beforeAll(async () => {
       await addInitialMovies(); // Add 16 movies
@@ -357,9 +360,9 @@ describe('when there is initially some movies and reviews saved in db', () => {
       });
 
       // Check the data changed in the db
-      const reviewsMovie = await api.get(`/api/v1.0/movies/${initialMovies[0].idTMDB}/reviews/${reviewToChange._id}`);
+      const reviewMovie = await api.get(`/api/v1.0/movies/${initialMovies[0].idTMDB}/reviews/${reviewToChange._id}`);
 
-      expect(reviewsMovie.body).toMatchObject({
+      expect(reviewMovie.body).toMatchObject({
         title: newReview.title,
         body: newReview.body,
       });
@@ -476,6 +479,136 @@ describe('when there is initially some movies and reviews saved in db', () => {
       expect(reviewMovie.body).toEqual(initialReviewMovie.body);
     });
   });
+
+  // Delete reviews
+  describe('delete review', () => {
+    beforeAll(async () => {
+      await addInitialMovies();
+    });
+    beforeEach(async () => {
+      // To remove the session after every test
+      await api
+        .post('/api/v1.0/auth/logout').send();
+      await addInitialReviews();
+    });
+    it('succeeds with valid data', async () => {
+      // Login
+      await api
+        .post('/api/v1.0/auth/login')
+        .send({
+          username: initialUsers[0].username,
+          password: initialUsers[0].username, // The password is the same that username
+        });
+
+      // The inital data in the db of this movie
+      const initialReviewsMovie = await api.get(`/api/v1.0/movies/${initialMovies[0].idTMDB}/reviews`);
+
+      const reviewToDelete = initialReviews
+        .find((item) => item.userId === initialUsers[0]._id
+          && initialMovies[0]._id === item.movieId);
+
+      await api
+        .delete(`/api/v1.0/movies/${initialMovies[0].idTMDB}/reviews/${reviewToDelete._id}`)
+        .send().expect(204);
+
+      // Check the data changed in db
+      const finalReviewsMovie = await api.get(`/api/v1.0/movies/${initialMovies[0].idTMDB}/reviews`);
+
+      expect(finalReviewsMovie.body.total).toBe(initialReviewsMovie.body.total - 1);
+      expect(finalReviewsMovie.body.results).not.toContainEqual(expect.objectContaining({
+        title: reviewToDelete.title,
+        body: reviewToDelete.body,
+      }));
+    });
+
+    it('fails with status code 404 if the movie does not exist', async () => {
+      // Login
+      await api
+        .post('/api/v1.0/auth/login')
+        .send({
+          username: initialUsers[0].username,
+          password: initialUsers[0].username, // The password is the same that username
+        });
+
+      const reviewToDelete = initialReviews
+        .find((item) => item.userId === initialUsers[0]._id
+          && initialMovies[0]._id === item.movieId);
+
+      await api
+        .delete(`/api/v1.0/movies/0/reviews/${reviewToDelete._id}`)
+        .send().expect(404);
+
+      // Check the review was not deleted of the db
+      await api.get(`/api/v1.0/movies/${initialMovies[0].idTMDB}/reviews/${reviewToDelete._id}`).expect(200);
+    });
+    it('fails with status code 404 if the review does not exist', async () => {
+      // Login
+      await api
+        .post('/api/v1.0/auth/login')
+        .send({
+          username: initialUsers[0].username,
+          password: initialUsers[0].username, // The password is the same that username
+        });
+
+      const initialReviewsMovie = await api.get(`/api/v1.0/movies/${initialMovies[0].idTMDB}/reviews`);
+
+      const validNonexistingId = await nonExistingId('review');
+      await api
+        .delete(`/api/v1.0/movies/${initialMovies[0].idTMDB}/reviews/${validNonexistingId}`)
+        .send().expect(404);
+
+      const finalReviewsMovie = await api.get(`/api/v1.0/movies/${initialMovies[0].idTMDB}/reviews`);
+
+      // The reviews of the movie are the same
+      expect(initialReviewsMovie.body.total).toBe(finalReviewsMovie.body.total);
+    });
+
+    it('fails with status code 401 if the user is not the owner of the review', async () => {
+      // Login
+      await api
+        .post('/api/v1.0/auth/login')
+        .send({
+          username: initialUsers[1].username,
+          password: initialUsers[1].username, // The password is the same that username
+        });
+
+      // Review made by one user different, userNumber0
+      const reviewToDelete = initialReviews
+        .find((item) => item.userId === initialUsers[0]._id
+          && initialMovies[0]._id === item.movieId);
+
+      const initialReviewsMovie = await api.get(`/api/v1.0/movies/${initialMovies[0].idTMDB}/reviews`);
+
+      await api
+        .delete(`/api/v1.0/movies/${initialMovies[0].idTMDB}/reviews/${reviewToDelete._id}`)
+        .send().expect(401);
+
+      // Check the review was not deleted of the db
+      await api.get(`/api/v1.0/movies/${initialMovies[0].idTMDB}/reviews/${reviewToDelete._id}`).expect(200);
+
+      const finalReviewsMovie = await api.get(`/api/v1.0/movies/${initialMovies[0].idTMDB}/reviews`);
+      // The reviews of the movie are the same
+      expect(initialReviewsMovie.body.total).toEqual(finalReviewsMovie.body.total);
+    });
+    it('fails with status code 401 if the user is not logged in', async () => {
+      const reviewToDelete = initialReviews
+        .find((item) => item.userId === initialUsers[0]._id
+          && initialMovies[0]._id === item.movieId);
+
+      const initialReviewsMovie = await api.get(`/api/v1.0/movies/${initialMovies[0].idTMDB}/reviews`);
+
+      await api
+        .delete(`/api/v1.0/movies/${initialMovies[0].idTMDB}/reviews/${reviewToDelete._id}`)
+        .send().expect(401);
+
+      // Check the review was not deleted of the db
+      await api.get(`/api/v1.0/movies/${initialMovies[0].idTMDB}/reviews/${reviewToDelete._id}`).expect(200);
+
+      const finalReviewsMovie = await api.get(`/api/v1.0/movies/${initialMovies[0].idTMDB}/reviews`);
+      // The reviews of the movie are the same
+      expect(initialReviewsMovie.body.total).toEqual(finalReviewsMovie.body.total);
+    });
+  });
 });
 
 describe('when there are movies but there are not reviews in db', () => {
@@ -485,7 +618,6 @@ describe('when there are movies but there are not reviews in db', () => {
   });
   it('return the number of reviews and data according to the result', async () => {
     const response = await api.get(`/api/v1.0/movies/${initialMovies[2].idTMDB}/reviews`).expect(200).expect('Content-Type', /application\/json/);
-    console.log(response.body);
     expect(response.body.results).toHaveLength(0);
   });
 });

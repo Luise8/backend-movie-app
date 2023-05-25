@@ -415,4 +415,33 @@ moviesRouter.put(
   },
 );
 
+// Delete review
+moviesRouter.delete(
+  '/:id/reviews/:reviewId',
+  isAuth,
+  async (request, response, next) => {
+    try {
+      const { user } = request;
+
+      const movie = await Movie.findOne({ idTMDB: request.params.id });
+      if (!movie) {
+        return response.status(404).json({ error: 'Invalid input. Movie no found' });
+      }
+
+      const review = await Review
+        .findOne({ movieId: movie.id, _id: request.params.reviewId });
+      if (!review) {
+        return response.status(404).json({ error: 'Invalid input. Review no found' });
+      }
+
+      if (user.id !== review.userId.toString()) return response.status(401).json();
+
+      await review.deleteOne();
+      return response.status(204).end();
+    } catch (error) {
+      next(error);
+    }
+  },
+);
+
 module.exports = moviesRouter;
