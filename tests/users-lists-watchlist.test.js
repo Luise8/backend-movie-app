@@ -1,6 +1,4 @@
 require('dotenv').config();
-const bcrypt = require('bcrypt');
-const mongoose = require('mongoose');
 const request = require('supertest');
 const session = require('express-session');
 const app = require('./app-helper');
@@ -9,10 +7,8 @@ const { dbDisconnect, initializeMongoServer } = require('./mongo-config-testing'
 const {
   initialUsers,
   initialLists,
-  initialRates,
   initialWatchlists,
   initialMovies,
-  initialReviews,
   addInitialUsers,
   addInitialLists,
   addInitialWatchlists,
@@ -23,13 +19,8 @@ const {
 } = require('./test-db-helper');
 const authRouter = require('../controllers/auth');
 const usersRouter = require('../controllers/users');
-const User = require('../models/user');
+const moviesRouter = require('../controllers/movies');
 const List = require('../models/list');
-const Watchlist = require('../models/watchlist');
-const ProfilePhoto = require('../models/profilePhoto');
-const Review = require('../models/review');
-const Rate = require('../models/rate');
-const Movie = require('../models/movie');
 const passport = require('../utils/passport');
 const middleware = require('../utils/middleware');
 
@@ -50,6 +41,7 @@ beforeAll(async () => {
   app.use(passport.session());
   app.use('/api/v1.0/auth', authRouter);
   app.use('/api/v1.0/users', usersRouter);
+  app.use('/api/v1.0/movies', moviesRouter);
   app.use(middleware.unknownEndpoint);
   app.use(middleware.errorHandler);
 });
@@ -63,18 +55,15 @@ beforeEach(async () => {
 
 describe('when there is initially some users and data in db', () => {
   describe('lists routes', () => {
-    beforeAll(async () => {
-      await addInitialMovies();
-      await addInitialReviews();
-      await addInitialRates();
-      await addInitialProfilePhotos();
-      await addInitialWatchlists();
-    });
-
     describe('get lists', () => {
       beforeAll(async () => {
+        await addInitialMovies();
         await addInitialLists();
         await addInitialUsers();
+        await addInitialReviews();
+        await addInitialRates();
+        await addInitialProfilePhotos();
+        await addInitialWatchlists();
       });
       it('lists are returned as json', async () => {
         await api.get(`/api/v1.0/users/${initialUsers[0]._id}/lists`).expect(200).expect('Content-Type', /application\/json/);
@@ -140,8 +129,13 @@ describe('when there is initially some users and data in db', () => {
 
     describe('get one list', () => {
       beforeAll(async () => {
+        await addInitialMovies();
         await addInitialLists();
         await addInitialUsers();
+        await addInitialReviews();
+        await addInitialRates();
+        await addInitialProfilePhotos();
+        await addInitialWatchlists();
       });
       it('list is returned as json', async () => {
         await api.get(`/api/v1.0/users/${initialUsers[0]._id}/lists/${initialUsers[0].lists[0]}`).expect(200).expect('Content-Type', /application\/json/);
@@ -252,6 +246,13 @@ describe('when there is initially some users and data in db', () => {
     });
 
     describe('create lists', () => {
+      beforeAll(async () => {
+        await addInitialMovies();
+        await addInitialReviews();
+        await addInitialRates();
+        await addInitialProfilePhotos();
+        await addInitialWatchlists();
+      });
       beforeEach(async () => {
         await addInitialLists();
         await addInitialUsers();
@@ -400,9 +401,15 @@ describe('when there is initially some users and data in db', () => {
 
     describe('edit lists', () => {
       beforeAll(async () => {
+        await addInitialMovies();
         await addInitialUsers();
+        await addInitialReviews();
+        await addInitialRates();
+        await addInitialProfilePhotos();
+        await addInitialWatchlists();
       });
       beforeEach(async () => {
+        await addInitialMovies();
         await addInitialLists();
       });
       it('successful with return of new list data', async () => {
@@ -549,9 +556,49 @@ describe('when there is initially some users and data in db', () => {
         const resSecond = await api.get(`/api/v1.0/users/${initialUsers[0]._id}/lists/${initialUsers[0].lists[0]}`);
         expect(resFirst.body).toMatchObject(resSecond.body);
       });
+
+      it('succeeds with the addition of new Movie in DB if it does not exist and if it has a valid ID of TMDB', async () => {
+      // Login
+        await api
+          .post('/api/v1.0/auth/login')
+          .send({
+            username: initialUsers[0].username,
+            password: initialUsers[0].username, // The password is the same that username
+          });
+
+        const newlist = {
+          name: `userNumber${initialUsers.length}`,
+          description: `A new list made by ${initialUsers[0].username}`,
+          movies: [
+            '675353',
+          ],
+        };
+
+        await api
+          .put(`/api/v1.0/users/${initialUsers[0]._id}/lists/${initialUsers[0].lists[0]}`)
+          .send({
+            name: newlist.name,
+            description: newlist.description,
+            movies: newlist.movies,
+          })
+          .expect(200);
+
+        const finalMovies = await api
+          .get('/api/v1.0/movies/');
+
+        // The movie was added to the movies collection
+        expect(finalMovies.body.total).toBe(initialMovies.length + 1);
+      });
     });
 
     describe('delete lists', () => {
+      beforeAll(async () => {
+        await addInitialMovies();
+        await addInitialReviews();
+        await addInitialRates();
+        await addInitialProfilePhotos();
+        await addInitialWatchlists();
+      });
       beforeEach(async () => {
         await addInitialLists();
         await addInitialUsers();
@@ -683,17 +730,14 @@ describe('when there is initially some users and data in db', () => {
   });
 
   describe('watchlist routes', () => {
-    beforeAll(async () => {
-      await addInitialMovies();
-      await addInitialUsers();
-      await addInitialReviews();
-      await addInitialRates();
-      await addInitialProfilePhotos();
-      await addInitialLists();
-    });
-
     describe('get watchlist', () => {
       beforeAll(async () => {
+        await addInitialMovies();
+        await addInitialUsers();
+        await addInitialReviews();
+        await addInitialRates();
+        await addInitialProfilePhotos();
+        await addInitialLists();
         await addInitialWatchlists();
       });
       it('watchlist is returned as json', async () => {
@@ -864,7 +908,17 @@ describe('when there is initially some users and data in db', () => {
     });
 
     describe('edit watchlist', () => {
+      beforeAll(async () => {
+        await addInitialMovies();
+        await addInitialReviews();
+        await addInitialRates();
+        await addInitialProfilePhotos();
+        await addInitialLists();
+        await addInitialUsers();
+      });
+
       beforeEach(async () => {
+        await addInitialMovies();
         await addInitialWatchlists();
       });
 
@@ -994,6 +1048,35 @@ describe('when there is initially some users and data in db', () => {
         // To check the data is the same in db after all the failed attempts
         const resSecond = await api.get(`/api/v1.0/users/${initialUsers[0]._id}/watchlist`);
         expect(resFirst.body).toMatchObject(resSecond.body);
+      });
+
+      it('succeeds with the addition of new Movie in DB if it does not exist and if it has a valid ID of TMDB', async () => {
+      // Login
+        await api
+          .post('/api/v1.0/auth/login')
+          .send({
+            username: initialUsers[0].username,
+            password: initialUsers[0].username, // The password is the same that username
+          });
+
+        const newWatchlist = {
+          movies: [
+            '675353',
+          ],
+        };
+
+        await api
+          .put(`/api/v1.0/users/${initialUsers[0]._id}/watchlist`)
+          .send({
+            movies: newWatchlist.movies,
+          })
+          .expect(200);
+
+        const finalMovies = await api
+          .get('/api/v1.0/movies/');
+
+        // The movie was added to the movies collection
+        expect(finalMovies.body.total).toBe(initialMovies.length + 1);
       });
     });
   });

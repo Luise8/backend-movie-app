@@ -309,8 +309,39 @@ describe('when there is initially some movies and reviews saved in db', () => {
         }).expect(409);
 
       // A new review was added only one time to the reviews collection
-      const newListCReview = await Review.find().count();
-      expect(newListCReview).toBe(initialReviews.length + 1);
+      const newListReview = await Review.find().count();
+      expect(newListReview).toBe(initialReviews.length + 1);
+    });
+
+    it('succeeds with the addition of new Movie in DB if it does not exist and if it has a valid ID of TMDB', async () => {
+      // Login
+      await api
+        .post('/api/v1.0/auth/login')
+        .send({
+          username: initialUsers[0].username,
+          password: initialUsers[0].username, // The password is the same that username
+        });
+
+      const newReview = {
+        title: `Title of the review created by ${initialUsers[0].username}`,
+        body: 'Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Aenean commodo ligula eget dolor. Aenean massa. Cum sociis natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus. Donec quam felis, ultricies nec, pellentesque eu, pretium quis, sem. Nulla consequat massa quis enim. Donec pede justo, fringilla vel, aliquet nec, vulputate eget, arcu. In enim justo, rhoncus ut, imperdiet a, venenati',
+      };
+
+      const newMovieIdTMDB = '675353';
+
+      await api
+        .post(`/api/v1.0/movies/${newMovieIdTMDB}/reviews`)
+        .send({
+          title: newReview.title,
+          body: newReview.body,
+        }).expect(201)
+        .expect('Content-Type', /application\/json/);
+
+      const finalMovies = await api
+        .get('/api/v1.0/movies/');
+
+      // The movie was added to the movies collection
+      expect(finalMovies.body.total).toBe(initialMovies.length + 1);
     });
   });
 
