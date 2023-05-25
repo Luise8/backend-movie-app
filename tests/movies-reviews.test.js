@@ -274,7 +274,7 @@ describe('when there is initially some movies and reviews saved in db', () => {
       const newListCReview = await Review.find().count();
       expect(newListCReview).toBe(initialReviews.length);
     });
-    it('succeeds with valid data', async () => {
+    it('fails with status code 409 if the user has already created a review for a movie', async () => {
       // Login
       await api
         .post('/api/v1.0/auth/login')
