@@ -313,7 +313,7 @@ moviesRouter.post(
         // If the movie does not exist in TMDB
         await session.abortTransaction();
         session.endSession();
-        return response.status(400).json({
+        return response.status(404).json({
           error: 'Invalid input. Movie no found',
         });
       }
