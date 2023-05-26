@@ -321,15 +321,15 @@ moviesRouter.post(
       const newMovie = takeMovieData(responseTMDB.data);
       const movieToSave = new Movie({
         ...newMovie,
-      }, { session });
-      const savedMovie = await movieToSave.save();
+      });
+      const savedMovie = await movieToSave.save({ session });
       const reviewToSave = new Review({
         title: request.body.title,
         body: request.body.body,
         date: new Date(),
         movieId: savedMovie.id,
         userId: user.id,
-      }, { session });
+      });
       const savedReview = await reviewToSave.save({ session });
 
       // Confirm transaction
