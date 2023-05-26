@@ -1025,7 +1025,7 @@ usersRouter.put(
               const newMovie = takeMovieData(responseTMDB.data);
               const movieToSave = new Movie({
                 ...newMovie,
-              }, { session });
+              });
 
               await movieToSave.save({ session });
               movie = movieToSave ? { [movie]: movieToSave._id.toString() } : movie;
@@ -1083,18 +1083,33 @@ usersRouter.delete(
   async (request, response, next) => {
     const session = await mongoose.connection.startSession();
     try {
+      // Start transaction
+      session.startTransaction();
       // Checks
       const { user } = request;
       // Check user and list exist and user is the owner of the list
       const userDb = await User.findById(request.params.id);
-      if (!userDb) return response.status(404).json({ error: 'user no found' });
+      if (!userDb) {
+        await session.commitTransaction();
+        session.endSession();
+        return response.status(404).json({ error: 'user no found' });
+      }
       const list = await List.findById(request.params.listId);
-      if (!list) return response.status(404).json({ error: 'list no found' });
-      if (user.id !== request.params.id) return response.status(401).end();
-      if (user.id !== list.userId.toString()) return response.status(401).end();
-
-      // Start transaction
-      session.startTransaction();
+      if (!list) {
+        await session.commitTransaction();
+        session.endSession();
+        return response.status(404).json({ error: 'list no found' });
+      }
+      if (user.id !== request.params.id) {
+        await session.commitTransaction();
+        session.endSession();
+        return response.status(401).end();
+      }
+      if (user.id !== list.userId.toString()) {
+        await session.commitTransaction();
+        session.endSession();
+        return response.status(401).end();
+      }
 
       userDb.lists.filter((itemList) => itemList.toString() !== list.id);
       await userDb.save({ session });
@@ -1355,7 +1370,7 @@ usersRouter.put(
               const newMovie = takeMovieData(responseTMDB.data);
               const movieToSave = new Movie({
                 ...newMovie,
-              }, { session });
+              });
 
               await movieToSave.save({ session });
               movie = movieToSave ? { [movie]: movieToSave._id.toString() } : movie;
