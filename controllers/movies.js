@@ -444,4 +444,174 @@ moviesRouter.delete(
   },
 );
 
+// Create a rate
+moviesRouter.post(
+  '/:id/rates',
+  isAuth,
+  // Sanitization and validation
+  body('value')
+    .trim()
+    .custom((value) => !/\s/.test(value))
+    .withMessage('No spaces are allowed in value')
+    .isLength({ min: 1, max: 2 })
+    .withMessage('Min length 1, max length 2')
+    .custom((value) => /^([1-9]|10)$/.test(value))
+    .withMessage('value only can has numeric characters from 1 to 10'),
+  async (request, response, next) => {
+    try {
+      const result = validationResult(request);
+      if (!result.isEmpty()) {
+        return response.status(400).json({ errors: result.array() });
+      }
+      return next();
+    } catch (error) {
+      return next(error);
+    }
+  },
+  async (request, response, next) => {
+    const session = await mongoose.connection.startSession();
+    try {
+      // Start transaction
+      session.startTransaction();
+      const { user } = request;
+
+      const movie = await Movie.findOne({ idTMDB: request.params.id });
+      if (movie) {
+        const isCreated = await Rate.findOne({ userId: user.id, movieId: movie.id });
+        if (isCreated) {
+          await session.abortTransaction();
+          session.endSession();
+          return response.status(409).json({ message: 'Already created' });
+        }
+        const rateToSave = new Rate({
+          value: request.body.value,
+          date: new Date(),
+          movieId: movie.id,
+          userId: user.id,
+        });
+
+        const savedRate = await rateToSave.save();
+        await session.commitTransaction();
+        session.endSession();
+        return response.status(201).json(savedRate);
+      }
+
+      // Get error of TMDB to modify it
+      let responseTMDB;
+      try {
+        responseTMDB = await axios.get(config.URL_FIND_ONE_MOVIE(request.params.id));
+      } catch (error) {
+        // If the movie does not exist in TMDB
+        await session.abortTransaction();
+        session.endSession();
+        return response.status(404).json({
+          error: 'Invalid input. Movie no found',
+        });
+      }
+
+      const newMovie = takeMovieData(responseTMDB.data);
+      const movieToSave = new Movie({
+        ...newMovie,
+      });
+      const savedMovie = await movieToSave.save({ session });
+      const rateToSave = new Rate({
+        value: request.body.value,
+        date: new Date(),
+        movieId: savedMovie.id,
+        userId: user.id,
+      });
+      const savedRate = await rateToSave.save({ session });
+
+      // Confirm transaction
+      await session.commitTransaction();
+      session.endSession();
+
+      return response.status(201).json(savedRate);
+    } catch (exception) {
+      await session.abortTransaction();
+      session.endSession();
+      next(exception);
+    }
+  },
+);
+
+// Edit rate
+moviesRouter.put(
+  '/:id/rates/:rateId',
+  isAuth,
+  // Sanitization and validation
+  body('value')
+    .trim()
+    .custom((value) => !/\s/.test(value))
+    .withMessage('No spaces are allowed in value')
+    .isLength({ min: 1, max: 2 })
+    .withMessage('Min length 1, max length 2')
+    .custom((value) => /^([1-9]|10)$/.test(value))
+    .withMessage('value only can has numeric characters from 1 to 10'),
+  async (request, response, next) => {
+    try {
+      const result = validationResult(request);
+      if (!result.isEmpty()) {
+        return response.status(400).json({ errors: result.array() });
+      }
+      return next();
+    } catch (error) {
+      return next(error);
+    }
+  },
+  async (request, response, next) => {
+    try {
+      const { user } = request;
+
+      const movie = await Movie.findOne({ idTMDB: request.params.id });
+      if (!movie) {
+        return response.status(404).json({ error: 'Invalid input. Movie no found' });
+      }
+
+      const rate = await Rate
+        .findOne({ movieId: movie.id, _id: request.params.rateId });
+      if (!rate) {
+        return response.status(404).json({ error: 'Invalid input. Rate no found' });
+      }
+
+      if (user.id !== rate.userId.toString()) return response.status(401).json();
+
+      rate.value = request.body.value;
+      const savedReview = await rate.save();
+      return response.json(savedReview);
+    } catch (error) {
+      next(error);
+    }
+  },
+);
+
+// Delete rate
+moviesRouter.delete(
+  '/:id/rates/:rateId',
+  isAuth,
+  async (request, response, next) => {
+    try {
+      const { user } = request;
+
+      const movie = await Movie.findOne({ idTMDB: request.params.id });
+      if (!movie) {
+        return response.status(404).json({ error: 'Invalid input. Movie no found' });
+      }
+
+      const rate = await Rate
+        .findOne({ movieId: movie.id, _id: request.params.rateId });
+      if (!rate) {
+        return response.status(404).json({ error: 'Invalid input. Rate no found' });
+      }
+
+      if (user.id !== rate.userId.toString()) return response.status(401).json();
+
+      await rate.deleteOne();
+      return response.status(204).end();
+    } catch (error) {
+      next(error);
+    }
+  },
+);
+
 module.exports = moviesRouter;

@@ -39,5 +39,25 @@ Content-Type: application/json
   "body": "Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Aenean commodo ligula eget dolor. Aenean massa. Cum sociis natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus. Donec quam felis, ultricies nec, pellentesque eu, pretium quis, sem. Nulla consequat massa quis enim. Donec pede justo, fringilla vel, aliquet nec, vulputate eget, arcu. In enim justo, rhoncus ut, imperdiet a, venenati Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Aenean commodo ligula eget dolor. Aenean massa. Cum sociis natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus. Donec quam felis, ultricies nec, pellentesque eu, pretium quis, sem. Nulla consequat massa quis enim. Donec pede justo, fringilla vel, aliquet nec, vulputate eget, arcu. In enim justo, rhoncus ut, imperdiet a, venenati"
 }
 
-###   // Edit review - Review made by userNumber0
+###   // Delete review - By userNumber0
 DELETE http://localhost:3003/api/v1.0/movies/9799/reviews/64493b16236a412ea5eb6550
+
+
+###   // Add one rate
+POST http://localhost:3003/api/v1.0/movies/253835/rates
+Content-Type: application/json
+
+{
+  "value": "1"
+}
+
+###   // Edit rate
+PUT http://localhost:3003/api/v1.0/movies/9799/rates/64502ae06dc338b6e80b8c59
+Content-Type: application/json
+
+{
+  "value": "10"
+}
+
+###   // Delete rate - By userNumber1
+DELETE http://localhost:3003/api/v1.0/movies/9799/rates/64502ae06dc338b6e80b8c5a
