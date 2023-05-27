@@ -4,6 +4,8 @@ const mongoose = require('mongoose');
 const session = require('express-session');
 const MongoStore = require('connect-mongo');
 const cors = require('cors');
+const compression = require('compression');
+const helmet = require('helmet');
 const config = require('./utils/config');
 const { logger } = require('./utils/logger');
 const middleware = require('./utils/middleware');
@@ -46,8 +48,12 @@ const app = express();
     store: sessionStore,
   }));
   app.use(morgan('dev', { stream: logger.stream }));
+  app.use(helmet());
+  app.use(compression()); // Compress all routes
   app.use(passport.initialize());
   app.use(passport.session());
+  app.use(middleware.rateLimiter());
+
   app.use('/api/v1.0/movies', moviesRouter);
   app.use('/api/v1.0/auth', authRouter);
   app.use('/api/v1.0/users', usersRouter);
