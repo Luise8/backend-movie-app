@@ -8,10 +8,7 @@ const app = require('./app-helper');
 const { dbDisconnect, initializeMongoServer } = require('./mongo-config-testing');
 const {
   initialUsers,
-  initialLists,
   initialRates,
-  initialWatchlists,
-  initialMovies,
   initialReviews,
   addInitialUsers,
   addInitialLists,

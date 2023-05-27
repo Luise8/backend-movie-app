@@ -3,7 +3,6 @@ const session = require('express-session');
 const app = require('./app-helper');
 const { dbDisconnect, initializeMongoServer } = require('./mongo-config-testing');
 const { addInitialUsers, initialUsers } = require('./users-helper-db');
-const User = require('../models/user');
 const authRouter = require('../controllers/auth');
 const passport = require('../utils/passport');
 
