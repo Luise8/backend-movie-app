@@ -7,7 +7,6 @@ const {
 const Movie = require('../models/movie');
 const Review = require('../models/review');
 const Rate = require('../models/rate');
-const { logger } = require('../utils/logger');
 const config = require('../utils/config');
 const { takeMovieData } = require('../utils/TMDB-functions');
 const { isAuth } = require('../utils/middleware');
