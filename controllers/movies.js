@@ -83,7 +83,6 @@ moviesRouter.get(
         next_page: (pageSize * (page + 1)) < count ? `/movies?page=${page + 1}&page_size=${pageSize}` : '',
         results: movieList,
       };
-      logger.debug('%O', movieList);
       response.json(resultMovies);
     } catch (exception) {
       next(exception);
@@ -158,7 +157,6 @@ moviesRouter.get(
         const reviews = await Review.find({ movieId: movie._id }).limit(pageSize)
           .sort({ date: -1, userId: -1 }).skip(pageSize * page)
           .exec();
-        logger.debug('🚀 ~ file: movies.js:95 ~ moviesRouter.get ~ reviews:%O', reviews);
 
         // Get number of prev page
         let prevPage;
