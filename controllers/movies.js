@@ -6,7 +6,6 @@ const {
 } = require('express-validator');
 const Movie = require('../models/movie');
 const Review = require('../models/review');
-const User = require('../models/user');
 const Rate = require('../models/rate');
 const { logger } = require('../utils/logger');
 const config = require('../utils/config');
