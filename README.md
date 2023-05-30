@@ -7,3 +7,5 @@ It has functionalities: movies, user, authentication, sessions, reviews, rates, 
 Databases managed by mongoose.
 
 Session and authentication are handled by express-session, passportJs, and connect-mongo.
+
+Tests performed with jest, supertest, mongodb-memory-server-core
