@@ -41,6 +41,67 @@ beforeAll(async () => {
 const api = request.agent(app);
 
 describe('when there is initially some movies and rates saved in db', () => {
+  // Get one rate for specific user
+  describe('viewing a specific rate for specific user', () => {
+    beforeAll(async () => {
+      await addInitialMovies();
+      await addInitialRates();
+    });
+    it('succeeds with a valid id and populate right data', async () => {
+      // Login
+      await api
+        .post('/api/v1.0/auth/login')
+        .send({
+          username: initialUsers[0].username,
+          password: initialUsers[0].username, // The password is the same that username
+        });
+
+      const movieSelected = initialMovies[0];
+      const rateSelected = initialRates.find((rate) => rate.userId === initialUsers[0]._id);
+
+      // Response rate selected
+      const response = await api
+        .get(`/api/v1.0/movies/${movieSelected.idTMDB}/rateUser`)
+        .expect(200)
+        .expect('Content-Type', /application\/json/);
+
+      // movieId field is populate to release_date, name, photo, id, idTMDB,
+      expect(response.body).toMatchObject({
+        movieId: {
+          name: movieSelected.name,
+          photo: movieSelected.photo,
+          id: movieSelected._id,
+          idTMDB: movieSelected.idTMDB,
+          release_date: movieSelected.release_date,
+        },
+        userId: rateSelected.userId,
+        value: rateSelected.value,
+        id: rateSelected._id,
+        date: rateSelected.date,
+      });
+    });
+
+    it('fails with statuscode 404 if movie or rate does not exist', async () => {
+      // Login
+      await api
+        .post('/api/v1.0/auth/login')
+        .send({
+          username: initialUsers[0].username,
+          password: initialUsers[0].username, // The password is the same that username
+        });
+
+      // Movie not found
+      await api
+        .get('/api/v1.0/movies/0/rateUser')
+        .expect(404).expect({ message: 'Movie not found' });
+
+      // This movie does not have any rate to this user
+      await api
+        .get(`/api/v1.0/movies/${initialMovies[10].idTMDB}/rateUser`)
+        .expect(404);
+    });
+  });
+
   // Create rates
   describe('create rates', () => {
     beforeEach(async () => {

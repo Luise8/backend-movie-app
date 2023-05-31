@@ -233,6 +233,25 @@ moviesRouter.get('/:id/reviews/:idReview', async (request, response, next) => {
   }
 });
 
+// Get review for specific movie and user
+moviesRouter.get('/:id/reviewUser', isAuth, async (request, response, next) => {
+  try {
+    const movie = await Movie.findOne({ idTMDB: request.params.id }).exec();
+    if (!movie) return response.status(404).json({ message: 'Movie not found' });
+
+    const review = await Review.findOne({ movieId: movie.id, userId: request.user.id }).populate('movieId', {
+      name: 1, release_date: 1, photo: 1, idTMDB: 1,
+    });
+    if (review) {
+      response.json(review);
+    } else {
+      response.status(404).end();
+    }
+  } catch (exception) {
+    next(exception);
+  }
+});
+
 // Create a review
 moviesRouter.post(
   '/:id/reviews',
@@ -439,6 +458,25 @@ moviesRouter.delete(
     }
   },
 );
+
+// Get rate for specific movie and user
+moviesRouter.get('/:id/rateUser', isAuth, async (request, response, next) => {
+  try {
+    const movie = await Movie.findOne({ idTMDB: request.params.id }).exec();
+    if (!movie) return response.status(404).json({ message: 'Movie not found' });
+
+    const rate = await Rate.findOne({ movieId: movie.id, userId: request.user.id }).populate('movieId', {
+      name: 1, release_date: 1, photo: 1, idTMDB: 1,
+    });
+    if (rate) {
+      response.json(rate);
+    } else {
+      response.status(404).end();
+    }
+  } catch (exception) {
+    next(exception);
+  }
+});
 
 // Create a rate
 moviesRouter.post(

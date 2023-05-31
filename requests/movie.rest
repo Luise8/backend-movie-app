@@ -21,6 +21,14 @@ GET http://localhost:3003/api/v1.0/movies/9799/reviews/64493b16236a412ea5eb6550 
 ###   // One review of one movie with WRONG id of review
 GET http://localhost:3003/api/v1.0/movies/9799/reviews/64493b16236a412ea5eb6559 HTTP/1.1
 
+###   // One movie review for specific user
+GET http://localhost:3003/api/v1.0/movies/9799/reviewUser HTTP/1.1
+
+###   // One movie rate for specific user
+GET http://localhost:3003/api/v1.0/movies/9799/rateUser HTTP/1.1
+
+
+
 ###   // Add one review
 POST http://localhost:3003/api/v1.0/movies/343622/reviews
 Content-Type: application/json
