@@ -463,6 +463,34 @@ moviesRouter.get('/:id', async (request, response, next) => {
   }
 });
 
+// Get movie details
+moviesRouter.get('/:id/detail', async (request, response, next) => {
+  try {
+    // To get TMDB error
+    let movieTMDB;
+    try {
+      movieTMDB = await axios.get(config.URL_FIND_MOVIE_DETAILS(request.params.id));
+    } catch (error) {
+      return response.status(404).json({ error: 'Movie not found' });
+    }
+
+    const movie = await Movie.findOne({ idTMDB: request.params.id }).lean().exec();
+    if (movie) {
+      movie.id = movie._id;
+      delete movie._id;
+      delete movie.__v;
+      const reviews = await Review.find({ movieId: movie.id }).count().exec();
+      movie.reviews = reviews;
+    }
+    return response.json({
+      ...movieTMDB.data,
+      movieDB: movie,
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
 moviesRouter.get(
   '/:id/reviews',
   // Sanitization and validation
