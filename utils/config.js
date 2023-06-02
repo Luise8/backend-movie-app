@@ -1,5 +1,4 @@
 require('dotenv').config();
-const genresTMDB = require('./movie-genres-TMDB');
 
 const { PORT } = process.env;
 const URL_FIND_ONE_MOVIE = (movieIdTMDB) => {
