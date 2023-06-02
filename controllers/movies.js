@@ -10,6 +10,7 @@ const Rate = require('../models/rate');
 const config = require('../utils/config');
 const { takeMovieData } = require('../utils/TMDB-functions');
 const { isAuth } = require('../utils/middleware');
+const genresTMDB = require('../utils/movie-genres-TMDB');
 
 moviesRouter.get(
   '/',
@@ -83,6 +84,368 @@ moviesRouter.get(
       response.json(resultMovies);
     } catch (exception) {
       next(exception);
+    }
+  },
+);
+
+// Get popular movies from tmdb
+moviesRouter.get(
+  '/popular',
+  // Sanitization and validation
+  query('page')
+    .optional()
+    .trim()
+    .custom((value) => !/\s/.test(value))
+    .withMessage('No spaces are allowed in page')
+    .custom((value) => /^\d+$/.test(value))
+    .withMessage('page has non-numeric characters.')
+    .custom((value) => (value !== 0))
+    .withMessage('Min value to page must be 1'),
+  (req, res, next) => {
+    try {
+      const result = validationResult(req);
+      if (!result.isEmpty()) {
+        return res.status(400).json({ errors: result.array() });
+      }
+      return next();
+    } catch (error) {
+      return next(error);
+    }
+  },
+  async (request, response, next) => {
+    try {
+      // Get page value, pageSize and limiPage
+      const page = Number(request.query.page) || 1;
+      const pageSize = 20;
+      const limitPage = 500;
+      const pageToFind = page < limitPage ? page : limitPage;
+
+      // Get movies count and movies
+      const movieResults = await axios.get(config.URL_POPULAR_MOVIES(pageToFind));
+      const movieList = page <= limitPage ? movieResults : [];
+
+      const totalResults = movieResults.data?.total_results || 0;
+      let count;
+      if ((limitPage * 20) < totalResults) {
+        count = limitPage * 20;
+      } else {
+        count = totalResults;
+      }
+
+      // Get number of prev page
+      let prevPage;
+      if ((pageSize * (page - 1)) > count) {
+        prevPage = Math.ceil(count / pageSize);
+      } else {
+        prevPage = page - 1;
+      }
+
+      const resultMovies = {
+        page_size: 20,
+        prev_page: page === 1 || count === 0 ? '' : `movies/popular?page=${prevPage}`,
+        next_page: (pageSize * page) < count ? `movies/popular?page=${page + 1}` : '',
+        page,
+        ...movieList.data,
+        total_results: count,
+        total_pages: Math.ceil(count / pageSize),
+      };
+      response.json(resultMovies);
+    } catch (error) {
+      next(error);
+    }
+  },
+);
+
+// Get latest movies from tmdb
+moviesRouter.get(
+  '/latest',
+  // Sanitization and validation
+  query('page')
+    .optional()
+    .trim()
+    .custom((value) => !/\s/.test(value))
+    .withMessage('No spaces are allowed in page')
+    .custom((value) => /^\d+$/.test(value))
+    .withMessage('page has non-numeric characters.')
+    .custom((value) => (value !== 0))
+    .withMessage('Min value to page must be 1'),
+  (req, res, next) => {
+    try {
+      const result = validationResult(req);
+      if (!result.isEmpty()) {
+        return res.status(400).json({ errors: result.array() });
+      }
+      return next();
+    } catch (error) {
+      return next(error);
+    }
+  },
+  async (request, response, next) => {
+    try {
+      // Get page value, pageSize and limiPage
+      const page = Number(request.query.page) || 1;
+      const pageSize = 20;
+      const limitPage = 500;
+      const pageToFind = page < limitPage ? page : limitPage;
+
+      // Get movies count and movies
+      const movieResults = await axios.get(config.URL_LATEST_MOVIES(pageToFind));
+      const movieList = page <= limitPage ? movieResults : [];
+
+      const totalResults = movieResults.data?.total_results || 0;
+      let count;
+      if ((limitPage * 20) < totalResults) {
+        count = limitPage * 20;
+      } else {
+        count = totalResults;
+      }
+
+      // Get number of prev page
+      let prevPage;
+      if ((pageSize * (page - 1)) > count) {
+        prevPage = Math.ceil(count / pageSize);
+      } else {
+        prevPage = page - 1;
+      }
+
+      const resultMovies = {
+        page_size: 20,
+        prev_page: page === 1 || count === 0 ? '' : `movies/latest?page=${prevPage}`,
+        next_page: (pageSize * page) < count ? `movies/latest?page=${page + 1}` : '',
+        page,
+        ...movieList.data,
+        total_results: count,
+        total_pages: Math.ceil(count / pageSize),
+      };
+
+      response.json(resultMovies);
+    } catch (error) {
+      next(error);
+    }
+  },
+);
+
+// Get trending movies from tmdb
+moviesRouter.get(
+  '/trending',
+  // Sanitization and validation
+  query('page')
+    .optional()
+    .trim()
+    .custom((value) => !/\s/.test(value))
+    .withMessage('No spaces are allowed in page')
+    .custom((value) => /^\d+$/.test(value))
+    .withMessage('page has non-numeric characters.')
+    .custom((value) => (value !== 0))
+    .withMessage('Min value to page must be 1'),
+  (req, res, next) => {
+    try {
+      const result = validationResult(req);
+      if (!result.isEmpty()) {
+        return res.status(400).json({ errors: result.array() });
+      }
+      return next();
+    } catch (error) {
+      return next(error);
+    }
+  },
+  async (request, response, next) => {
+    try {
+      // Get page value, pageSize and limiPage
+      const page = Number(request.query.page) || 1;
+      const pageSize = 20;
+      const limitPage = 1000;
+      const pageToFind = page < limitPage ? page : limitPage;
+
+      // Get movies count and movies
+      const movieResults = await axios.get(config.URL_TRENDING_MOVIES(pageToFind));
+      const movieList = page <= limitPage ? movieResults : [];
+
+      const totalResults = movieResults.data?.total_results || 0;
+      let count;
+      if ((limitPage * 20) < totalResults) {
+        count = limitPage * 20;
+      } else {
+        count = totalResults;
+      }
+
+      // Get number of prev page
+      let prevPage;
+      if ((pageSize * (page - 1)) > count) {
+        prevPage = Math.ceil(count / pageSize);
+      } else {
+        prevPage = page - 1;
+      }
+
+      const resultMovies = {
+        page_size: 20,
+        prev_page: page === 1 || count === 0 ? '' : `movies/trending?page=${prevPage}`,
+        next_page: (pageSize * page) < count ? `movies/trending?page=${page + 1}` : '',
+        page,
+        ...movieList.data,
+        total_results: count,
+        total_pages: Math.ceil(count / pageSize),
+      };
+      response.json(resultMovies);
+    } catch (error) {
+      next(error);
+    }
+  },
+);
+
+// Get movies by query from tmdb
+moviesRouter.get(
+  '/search',
+  // Sanitization and validation
+  query('page')
+    .optional()
+    .trim()
+    .custom((value) => !/\s/.test(value))
+    .withMessage('No spaces are allowed in page')
+    .custom((value) => /^\d+$/.test(value))
+    .withMessage('page has non-numeric characters.')
+    .custom((value) => (value !== 0))
+    .withMessage('Min value to page must be 1'),
+  query('query')
+    .exists()
+    .withMessage('query is required')
+    .trim()
+    .customSanitizer((value) => value.replace(/\s{2,}/g, ' ')),
+  (req, res, next) => {
+    try {
+      const result = validationResult(req);
+      if (!result.isEmpty()) {
+        return res.status(400).json({ errors: result.array() });
+      }
+      return next();
+    } catch (error) {
+      return next(error);
+    }
+  },
+  async (request, response, next) => {
+    try {
+      // Get page value, pageSize, limiPage and query
+      const page = Number(request.query.page) || 1;
+      const pageSize = 20;
+      const limitPage = 1000;
+      const query = request.query.query?.slice(0, 214) || '';
+      const pageToFind = page < limitPage ? page : limitPage;
+
+      // Get movies count and movies
+      const movieResults = await axios.get(config.URL_SEARCH_MOVIES({ page: pageToFind, query }));
+      const movieList = page <= limitPage ? movieResults : [];
+
+      const totalResults = movieResults.data?.total_results || 0;
+      let count;
+      if ((limitPage * 20) < totalResults) {
+        count = limitPage * 20;
+      } else {
+        count = totalResults;
+      }
+
+      // Get number of prev page
+      let prevPage;
+      if ((pageSize * (page - 1)) > count) {
+        prevPage = Math.ceil(count / pageSize);
+      } else {
+        prevPage = page - 1;
+      }
+
+      const resultMovies = {
+        page_size: 20,
+        prev_page: page === 1 || count === 0 ? '' : `movies/search?query=${query}&page=${prevPage}`,
+        next_page: (pageSize * page) < count ? `movies/search?query=${query}&page=${page + 1}` : '',
+        page,
+        ...movieList.data,
+        total_results: count,
+        total_pages: Math.ceil(count / pageSize),
+      };
+      response.json(resultMovies);
+    } catch (error) {
+      next(error);
+    }
+  },
+);
+
+// Get movies by genre from tmdb
+moviesRouter.get(
+  '/genre',
+  // Sanitization and validation
+  query('page')
+    .optional()
+    .trim()
+    .custom((value) => !/\s/.test(value))
+    .withMessage('No spaces are allowed in page')
+    .custom((value) => /^\d+$/.test(value))
+    .withMessage('page has non-numeric characters.')
+    .custom((value) => (value !== 0))
+    .withMessage('Min value to page must be 1'),
+  query('genres')
+    .exists()
+    .isLength({ min: 2 })
+    .withMessage('Genres must be defined')
+    .custom((value) => {
+      const items = value.split(',');
+      const checkNumeric = items.every((item) => /^\d+$/.test(item));
+      if (!checkNumeric) return false;
+      const max = genresTMDB.reduce((prev, current) => ((prev.id > current.id)
+        ? prev : current)).id.toString().length;
+      return items.every((item) => item.toString().length >= 2 && item.toString().length <= max);
+    })
+    .withMessage('Genres must be a comma-separated string of valid types of movie genres'),
+  (req, res, next) => {
+    try {
+      const result = validationResult(req);
+      if (!result.isEmpty()) {
+        return res.status(400).json({ errors: result.array() });
+      }
+      return next();
+    } catch (error) {
+      return next(error);
+    }
+  },
+  async (request, response, next) => {
+    try {
+      // Get page value, pageSize, limiPage and genres
+      const page = Number(request.query.page) || 1;
+      const pageSize = 20;
+      const limitPage = 500;
+      const { genres } = request.query;
+      const pageToFind = page < limitPage ? page : limitPage;
+
+      // Get movies count and movies
+      const movieResults = await axios
+        .get(config.URL_FIND_MOVIES_BY_GENRE({ page: pageToFind, genres }));
+      const movieList = page <= limitPage ? movieResults : [];
+
+      const totalResults = movieList.data?.total_results || 0;
+      let count;
+      if ((limitPage * 20) < totalResults) {
+        count = limitPage * 20;
+      } else {
+        count = totalResults;
+      }
+
+      // Get number of prev page
+      let prevPage;
+      if ((pageSize * (page - 1)) > count) {
+        prevPage = Math.ceil(count / pageSize);
+      } else {
+        prevPage = page - 1;
+      }
+
+      const resultMovies = {
+        page_size: 20,
+        prev_page: page === 1 || count === 0 ? '' : `movies/genre?genres=${genres}&page=${prevPage}`,
+        next_page: (pageSize * page) < count ? `movies/genre?genres=${genres}&page=${page + 1}` : '',
+        page,
+        ...movieList.data,
+        total_results: count,
+        total_pages: Math.ceil(count / pageSize),
+      };
+      response.json(resultMovies);
+    } catch (error) {
+      next(error);
     }
   },
 );
