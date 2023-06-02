@@ -423,9 +423,7 @@ usersRouter.get(
 
         // Get number of prev page
         let prevPage;
-        if (page === 0) {
-          prevPage = '';
-        } else if ((pageSize * (page - 1)) > count) {
+        if ((pageSize * (page - 1)) > count) {
           if (Number.isInteger(count / pageSize)) {
             prevPage = (count / pageSize) - 1;
           } else {
@@ -443,13 +441,12 @@ usersRouter.get(
             name: 1, photo: 1, release_date: 1, idTMDB: 1, rateAverage: 1,
           })
           .exec();
-
         response.json({
           user_details: user,
           total: count,
           page_size: pageSize,
           page,
-          prev_page: page === 0 ? prevPage : `/movies?page=${prevPage}&page_size=${pageSize}`,
+          prev_page: page === 0 || count === 0 ? '' : `/movies?page=${prevPage}&page_size=${pageSize}`,
           next_page: (pageSize * (page + 1)) < count ? `/movies?page=${page + 1}&page_size=${pageSize}` : '',
           results: reviews,
         });
@@ -520,9 +517,7 @@ usersRouter.get(
 
         // Get number of prev page
         let prevPage;
-        if (page === 0) {
-          prevPage = '';
-        } else if ((pageSize * (page - 1)) > count) {
+        if ((pageSize * (page - 1)) > count) {
           if (Number.isInteger(count / pageSize)) {
             prevPage = (count / pageSize) - 1;
           } else {
@@ -546,7 +541,7 @@ usersRouter.get(
           total: count,
           page_size: pageSize,
           page,
-          prev_page: page === 0 ? prevPage : `/movies?page=${prevPage}&page_size=${pageSize}`,
+          prev_page: page === 0 || count === 0 ? '' : `/movies?page=${prevPage}&page_size=${pageSize}`,
           next_page: (pageSize * (page + 1)) < count ? `/movies?page=${page + 1}&page_size=${pageSize}` : '',
           results: rates,
         });
@@ -617,9 +612,7 @@ usersRouter.get(
 
         // Get number of prev page
         let prevPage;
-        if (page === 0) {
-          prevPage = '';
-        } else if ((pageSize * (page - 1)) > count) {
+        if ((pageSize * (page - 1)) > count) {
           if (Number.isInteger(count / pageSize)) {
             prevPage = (count / pageSize) - 1;
           } else {
@@ -640,7 +633,7 @@ usersRouter.get(
           total: count,
           page_size: pageSize,
           page,
-          prev_page: page === 0 ? prevPage : `/movies?page=${prevPage}&page_size=${pageSize}`,
+          prev_page: page === 0 || count === 0 ? '' : `/movies?page=${prevPage}&page_size=${pageSize}`,
           next_page: (pageSize * (page + 1)) < count ? `/movies?page=${page + 1}&page_size=${pageSize}` : '',
           results: lists,
         });
@@ -722,9 +715,7 @@ usersRouter.get(
 
         // Get number of prev page
         let prevPage;
-        if (page === 0) {
-          prevPage = '';
-        } else if ((pageSize * (page - 1)) > count) {
+        if ((pageSize * (page - 1)) > count) {
           if (Number.isInteger(count / pageSize)) {
             prevPage = (count / pageSize) - 1;
           } else {
@@ -769,7 +760,7 @@ usersRouter.get(
             total: count,
             page_size: pageSize,
             page,
-            prev_page: page === 0 ? prevPage : `/movies?page=${prevPage}&page_size=${pageSize}`,
+            prev_page: page === 0 || count === 0 ? '' : `/movies?page=${prevPage}&page_size=${pageSize}`,
             next_page: (pageSize * (page + 1)) < count ? `/movies?page=${page + 1}&page_size=${pageSize}` : '',
             description: list.description,
             listTotalIds,
@@ -1194,9 +1185,7 @@ usersRouter.get(
 
       // Get number of prev page
       let prevPage;
-      if (page === 0) {
-        prevPage = '';
-      } else if ((pageSize * (page - 1)) > count) {
+      if ((pageSize * (page - 1)) > count) {
         if (Number.isInteger(count / pageSize)) {
           prevPage = (count / pageSize) - 1;
         } else {
@@ -1239,7 +1228,7 @@ usersRouter.get(
         total: count,
         page_size: pageSize,
         page,
-        prev_page: page === 0 ? prevPage : `/movies?page=${prevPage}&page_size=${pageSize}`,
+        prev_page: page === 0 || count === 0 ? '' : `/movies?page=${prevPage}&page_size=${pageSize}`,
         next_page: (pageSize * (page + 1)) < count ? `/movies?page=${page + 1}&page_size=${pageSize}` : '',
         watchlistTotalIds,
         id: watchlist.id,

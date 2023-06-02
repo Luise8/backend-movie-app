@@ -62,9 +62,7 @@ moviesRouter.get(
 
       // Get number of prev page
       let prevPage;
-      if (page === 0) {
-        prevPage = '';
-      } else if ((pageSize * (page - 1)) > count) {
+      if ((pageSize * (page - 1)) > count) {
         if (Number.isInteger(count / pageSize)) {
           prevPage = (count / pageSize) - 1;
         } else {
@@ -78,7 +76,7 @@ moviesRouter.get(
         total: count,
         page_size: pageSize,
         page,
-        prev_page: page === 0 ? prevPage : `/movies?page=${prevPage}&page_size=${pageSize}`,
+        prev_page: page === 0 || count === 0 ? '' : `/movies?page=${prevPage}&page_size=${pageSize}`,
         next_page: (pageSize * (page + 1)) < count ? `/movies?page=${page + 1}&page_size=${pageSize}` : '',
         results: movieList,
       };
@@ -159,9 +157,7 @@ moviesRouter.get(
 
         // Get number of prev page
         let prevPage;
-        if (page === 0) {
-          prevPage = '';
-        } else if ((pageSize * (page - 1)) > count) {
+        if ((pageSize * (page - 1)) > count) {
           if (Number.isInteger(count / pageSize)) {
             prevPage = (count / pageSize) - 1;
           } else {
@@ -184,7 +180,7 @@ moviesRouter.get(
             total: count,
             page_size: pageSize,
             page,
-            prev_page: page === 0 ? prevPage : `/movies/${request.params.id}/reviews?page=${prevPage}&page_size=${pageSize}`,
+            prev_page: page === 0 || count === 0 ? '' : `/movies/${request.params.id}/reviews?page=${prevPage}&page_size=${pageSize}`,
             next_page: (pageSize * (page + 1)) < count ? `/movies/${request.params.id}/reviews?page=${page + 1}&page_size=${pageSize}` : '',
             results: [],
           });
@@ -202,7 +198,7 @@ moviesRouter.get(
             total: count,
             page_size: pageSize,
             page,
-            prev_page: page === 0 ? prevPage : `/movies/${request.params.id}/reviews?page=${prevPage}&page_size=${pageSize}`,
+            prev_page: page === 0 || count === 0 ? '' : `/movies/${request.params.id}/reviews?page=${prevPage}&page_size=${pageSize}`,
             next_page: (pageSize * (page + 1)) < count ? `/movies/${request.params.id}/reviews?page=${page + 1}&page_size=${pageSize}` : '',
             results: reviews,
           });
