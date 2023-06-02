@@ -89,7 +89,7 @@ describe('when there is initially some movies saved in db', () => {
     expect(response.body.results[0]._id).not.toBeDefined();
   });
 
-  describe('viewing a specific movie', () => {
+  describe('viewing a specific movie general info', () => {
     it('succeeds with a valid id', async () => {
       const response = await api
         .get(`/api/v1.0/movies/${initialMovies[0].idTMDB}`)
@@ -111,6 +111,45 @@ describe('when there is initially some movies saved in db', () => {
       console.log(validNonexistingIdTMDB);
       await api
         .get(`/api/v1.0/movies/${validNonexistingIdTMDB}`)
+        .expect(404);
+    });
+  });
+
+  describe('viewing a specific movie details', () => {
+    it('succeeds with a valid id', async () => {
+      const response = await api
+        .get(`/api/v1.0/movies/${initialMovies[0].idTMDB}/detail`)
+        .expect(200)
+        .expect('Content-Type', /application\/json/);
+
+      // Check if the response has the most relevant properties
+      expect(response.body.id).toBe(Number(initialMovies[0].idTMDB));
+      expect(response.body.similar).toBeDefined();
+      expect(response.body.images).toBeDefined();
+      expect(response.body.videos).toBeDefined();
+      expect(response.body.movieDB).toBeDefined();
+      expect(response.body.title).toBeDefined();
+      expect(response.body.release_date).toBeDefined();
+      expect(response.body.popularity).toBeDefined();
+      expect(response.body.genres).toBeDefined();
+      expect(response.body.adult).toBeDefined();
+      expect(response.body.production_companies).toBeDefined();
+
+      // Check is the movie document is in the movieDB property
+      const {
+        _id, ...formatedMovieSelected
+      } = initialMovies[0];
+
+      expect(response.body.movieDB).toMatchObject({
+        id: _id,
+        ...formatedMovieSelected,
+      });
+    });
+
+    it('fails with statuscode 404 if the movie does not exist', async () => {
+      const validNonexistingIdTMDB = await nonExistingId('movie');
+      await api
+        .get(`/api/v1.0/movies/${validNonexistingIdTMDB}/detail`)
         .expect(404);
     });
   });
