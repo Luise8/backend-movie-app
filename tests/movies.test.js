@@ -153,6 +153,30 @@ describe('when there is initially some movies saved in db', () => {
         .expect(404);
     });
   });
+  describe('viewing a specific movie only tmdb data', () => {
+    it('succeeds with a valid id', async () => {
+      const response = await api
+        .get(`/api/v1.0/movies/${initialMovies[0].idTMDB}/tmdb`)
+        .expect(200)
+        .expect('Content-Type', /application\/json/);
+
+      // Check if the response has the most relevant properties of tmdb data
+      expect(response.body.id).toBe(Number(initialMovies[0].idTMDB));
+      expect(response.body.title).toBeDefined();
+      expect(response.body.release_date).toBeDefined();
+      expect(response.body.popularity).toBeDefined();
+      expect(response.body.genres).toBeDefined();
+      expect(response.body.adult).toBeDefined();
+      expect(response.body.production_companies).toBeDefined();
+    });
+
+    it('fails with statuscode 404 if the movie does not exist', async () => {
+      const validNonexistingIdTMDB = await nonExistingId('movie');
+      await api
+        .get(`/api/v1.0/movies/${validNonexistingIdTMDB}/tmdb`)
+        .expect(404).expect({ error: 'Movie not found in TMDB' });
+    });
+  });
 });
 
 describe('when there are not movies in db', () => {

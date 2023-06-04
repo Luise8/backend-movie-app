@@ -491,6 +491,16 @@ moviesRouter.get('/:id/detail', async (request, response, next) => {
   }
 });
 
+// Get movie from TMDB - this route is usefull to check if a movie exist
+moviesRouter.get('/:id/tmdb', async (request, response) => {
+  try {
+    const movieTMDB = await axios.get(config.URL_FIND_ONE_MOVIE(request.params.id));
+    return response.json(movieTMDB.data);
+  } catch (error) {
+    return response.status(404).json({ error: 'Movie not found in TMDB' });
+  }
+});
+
 moviesRouter.get(
   '/:id/reviews',
   // Sanitization and validation
