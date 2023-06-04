@@ -66,7 +66,7 @@ describe('when there is initially some movies and rates saved in db', () => {
         .expect('Content-Type', /application\/json/);
 
       // movieId field is populate to release_date, name, photo, id, idTMDB,
-      expect(response.body).toMatchObject({
+      expect(response.body.rate).toMatchObject({
         movieId: {
           name: movieSelected.name,
           photo: movieSelected.photo,
@@ -81,7 +81,7 @@ describe('when there is initially some movies and rates saved in db', () => {
       });
     });
 
-    it('fails with statuscode 404 if movie or rate does not exist', async () => {
+    it('return null if movie or rate does not exist', async () => {
       // Login
       await api
         .post('/api/v1.0/auth/login')
@@ -93,12 +93,12 @@ describe('when there is initially some movies and rates saved in db', () => {
       // Movie not found
       await api
         .get('/api/v1.0/movies/0/rateUser')
-        .expect(404).expect({ message: 'Movie not found' });
+        .expect({ rate: null });
 
       // This movie does not have any rate to this user
       await api
         .get(`/api/v1.0/movies/${initialMovies[10].idTMDB}/rateUser`)
-        .expect(404);
+        .expect({ rate: null });
     });
   });
 

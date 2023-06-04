@@ -624,16 +624,15 @@ moviesRouter.get('/:id/reviews/:idReview', async (request, response, next) => {
 moviesRouter.get('/:id/reviewUser', isAuth, async (request, response, next) => {
   try {
     const movie = await Movie.findOne({ idTMDB: request.params.id }).exec();
-    if (!movie) return response.status(404).json({ message: 'Movie not found' });
+    if (!movie) return response.json({ review: null });
 
     const review = await Review.findOne({ movieId: movie.id, userId: request.user.id }).populate('movieId', {
       name: 1, release_date: 1, photo: 1, idTMDB: 1,
     });
     if (review) {
-      response.json(review);
-    } else {
-      response.status(404).end();
+      return response.json({ review });
     }
+    return response.json({ review: null });
   } catch (exception) {
     next(exception);
   }
@@ -850,16 +849,15 @@ moviesRouter.delete(
 moviesRouter.get('/:id/rateUser', isAuth, async (request, response, next) => {
   try {
     const movie = await Movie.findOne({ idTMDB: request.params.id }).exec();
-    if (!movie) return response.status(404).json({ message: 'Movie not found' });
+    if (!movie) return response.json({ rate: null });
 
     const rate = await Rate.findOne({ movieId: movie.id, userId: request.user.id }).populate('movieId', {
       name: 1, release_date: 1, photo: 1, idTMDB: 1,
     });
     if (rate) {
-      response.json(rate);
-    } else {
-      response.status(404).end();
+      return response.json({ rate });
     }
+    return response.json({ rate: null });
   } catch (exception) {
     next(exception);
   }

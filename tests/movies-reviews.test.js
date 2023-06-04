@@ -177,7 +177,7 @@ describe('when there is initially some movies and reviews saved in db', () => {
         .expect('Content-Type', /application\/json/);
 
       // movieId field is populate to release_date, name, photo, id, idTMDB,
-      expect(response.body).toMatchObject({
+      expect(response.body.review).toMatchObject({
         movieId: {
           name: movieSelected.name,
           photo: movieSelected.photo,
@@ -193,7 +193,7 @@ describe('when there is initially some movies and reviews saved in db', () => {
       });
     });
 
-    it('fails with statuscode 404 if movie or review does not exist', async () => {
+    it('return null if movie or review does not exist', async () => {
       // Login
       await api
         .post('/api/v1.0/auth/login')
@@ -205,12 +205,12 @@ describe('when there is initially some movies and reviews saved in db', () => {
       // Movie not found
       await api
         .get('/api/v1.0/movies/0/reviewUser')
-        .expect(404).expect({ message: 'Movie not found' });
+        .expect({ review: null });
 
       // This movie does not have any review to this user
       await api
         .get(`/api/v1.0/movies/${initialMovies[10].idTMDB}/reviewUser`)
-        .expect(404);
+        .expect({ review: null });
     });
   });
 
