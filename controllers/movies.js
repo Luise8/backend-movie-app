@@ -163,7 +163,7 @@ moviesRouter.get(
     .withMessage('No spaces are allowed in page')
     .custom((value) => /^\d+$/.test(value))
     .withMessage('page has non-numeric characters.')
-    .custom((value) => (value !== 0))
+    .custom((value) => (value > 0))
     .withMessage('Min value to page must be 1'),
   (req, res, next) => {
     try {
@@ -231,7 +231,7 @@ moviesRouter.get(
     .withMessage('No spaces are allowed in page')
     .custom((value) => /^\d+$/.test(value))
     .withMessage('page has non-numeric characters.')
-    .custom((value) => (value !== 0))
+    .custom((value) => (value > 0))
     .withMessage('Min value to page must be 1'),
   (req, res, next) => {
     try {
@@ -300,7 +300,7 @@ moviesRouter.get(
     .withMessage('No spaces are allowed in page')
     .custom((value) => /^\d+$/.test(value))
     .withMessage('page has non-numeric characters.')
-    .custom((value) => (value !== 0))
+    .custom((value) => (value > 0))
     .withMessage('Min value to page must be 1'),
   (req, res, next) => {
     try {
@@ -368,7 +368,7 @@ moviesRouter.get(
     .withMessage('No spaces are allowed in page')
     .custom((value) => /^\d+$/.test(value))
     .withMessage('page has non-numeric characters.')
-    .custom((value) => (value !== 0))
+    .custom((value) => (value > 0))
     .withMessage('Min value to page must be 1'),
   query('query')
     .customSanitizer((value) => {
@@ -458,7 +458,7 @@ moviesRouter.get(
     .withMessage('No spaces are allowed in page')
     .custom((value) => /^\d+$/.test(value))
     .withMessage('page has non-numeric characters.')
-    .custom((value) => (value !== 0))
+    .custom((value) => (value > 0))
     .withMessage('Min value to page must be 1'),
   query('genres')
     .exists()
