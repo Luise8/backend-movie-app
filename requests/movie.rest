@@ -6,6 +6,10 @@ GET http://localhost:3003/api/v1.0/movies
 ###
 GET http://localhost:3003/api/v1.0/movies?page=2&pageSize=5
 
+###
+// Get rated movies
+GET http://localhost:3003/api/v1.0/movies/rated?page=1
+
 ###    // One movie
 GET http://localhost:3003/api/v1.0/movies/9799 HTTP/1.1
 

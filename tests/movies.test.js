@@ -6,6 +6,8 @@ const {
   initialMovies,
   addInitialMovies,
   nonExistingId,
+  addInitialRates,
+  initialRates,
 } = require('./test-db-helper');
 const Movie = require('../models/movie');
 const moviesRouter = require('../controllers/movies');
@@ -175,6 +177,51 @@ describe('when there is initially some movies saved in db', () => {
       await api
         .get(`/api/v1.0/movies/${validNonexistingIdTMDB}/tmdb`)
         .expect(404).expect({ error: 'Movie not found in TMDB' });
+    });
+  });
+
+  describe('getting rated movies', () => {
+    beforeAll(async () => {
+      await addInitialRates();
+    });
+    const pageSize = 20;
+    const baseUrl = '/api/v1.0/movies/rated';
+
+    it('return right data with valid queries', async () => {
+      const page = 1;
+
+      const response = await api.get(`${baseUrl}?page=${page}`).expect(200).expect('Content-Type', /application\/json/);
+      const moviesIdRated = initialRates
+        .filter((rate, index, array) => index === array
+          .findIndex((other) => other.movieId === rate.movieId)).map((rate) => rate.movieId);
+
+      expect(response.body.results).toBeDefined();
+      expect(response.body.page).toBeDefined();
+      expect(response.body.page_size).toBeDefined();
+      expect(response.body.prev_page).toBeDefined();
+      expect(response.body.next_page).toBeDefined();
+      expect(response.body.total_pages).toBeDefined();
+      expect(response.body.total_results).toBeDefined();
+
+      expect(Array.isArray(response.body.results)).toBeTruthy();
+      expect(response.body.total_results).toBe(moviesIdRated.length);
+
+      expect(response.body.page_size).toBe(pageSize);
+
+      response.body.results.forEach((movie) => expect(moviesIdRated
+        .includes(movie.id)).toBeTruthy());
+    });
+
+    it('set default page to 1', async () => {
+      const response = await api.get(`${baseUrl}`).expect(200);
+      expect(response.body.page).toBe(1);
+    });
+
+    it('fails with status code 400 and array of errors if page is not valid', async () => {
+      const page = 'one';
+      const response = await api.get(`${baseUrl}?page=${page}`).expect(400);
+      expect(response.body.errors).toBeDefined();
+      expect(response.body.errors.length).toBeGreaterThan(0);
     });
   });
 });

@@ -88,6 +88,70 @@ moviesRouter.get(
   },
 );
 
+moviesRouter.get(
+  '/rated',
+  // Sanitization and validation
+  query('page')
+    .optional()
+    .trim()
+    .custom((value) => !/\s/.test(value))
+    .withMessage('No spaces are allowed in page')
+    .custom((value) => /^\d+$/.test(value))
+    .withMessage('page has non-numeric characters.')
+    .custom((value) => (value > 0))
+    .withMessage('Min value to page must be 1'),
+  (req, res, next) => {
+    try {
+      const result = validationResult(req);
+      if (!result.isEmpty()) {
+        return res.status(400).json({ errors: result.array() });
+      }
+      return next();
+    } catch (error) {
+      return next(error);
+    }
+  },
+  async (request, response, next) => {
+    try {
+      // Get page and pageSize values
+      const pageSize = 20;
+      const page = request.query.page ? parseInt(request.query.page, 10) : 1;
+
+      // Get movie count and movies
+      const count = await Movie.find({}).where('rateCount').gt(0).count();
+      const movieList = await Movie.find({}).where('rateCount').gt(0).limit(pageSize)
+        .skip(pageSize * page)
+        .sort({ rateAverage: -1, date: -1, idTMDB: -1 })
+        .exec();
+
+      // Get number of prev page
+      let prevPage;
+      if ((pageSize * (page - 1)) > count) {
+        if (Number.isInteger(count / pageSize)) {
+          prevPage = (count / pageSize) - 1;
+        } else {
+          prevPage = parseInt(count / pageSize, 10);
+        }
+      } else {
+        prevPage = page - 1;
+      }
+
+      const resultMovies = {
+        total_results: count,
+        page_size: pageSize,
+        page,
+        prev_page: page === 1 || count === 0 ? '' : `/movies?page=${prevPage}&page_size=${pageSize}`,
+        next_page: (pageSize * (page + 1)) < count ? `/movies?page=${page + 1}&page_size=${pageSize}` : '',
+        results: movieList,
+        total_pages: Math.ceil(count / pageSize),
+      };
+      response.json(resultMovies);
+    } catch (exception) {
+      next(exception);
+    }
+  },
+);
+
 // Get popular movies from tmdb
 moviesRouter.get(
   '/popular',
