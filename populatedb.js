@@ -455,13 +455,14 @@ function createThreeRates() {
   return rates;
 }
 const initialRates = createThreeRates();
+
 async function addInitialRates() {
   await Rate.deleteMany({});
   const ratetObjects = initialRates.map((rate) => new Rate(rate));
   const ratesPromise = ratetObjects.map((rate) => rate.save());
 
   const moviesToChange = initialRates.filter((rate, index, array) => index === array
-    .findIndex((other) => other.i === rate.i)).map((rate) => rate.movieId);
+    .findIndex((other) => other.movieId === rate.movieId)).map((rate) => rate.movieId);
 
   const moviesPromise = moviesToChange.map(async (movieId) => {
     const ratesCurrentMovie = initialRates.filter((rate) => rate.movieId === movieId);
