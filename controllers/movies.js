@@ -254,7 +254,7 @@ moviesRouter.get(
       // Get page value, pageSize and limiPage
       const page = Number(request.query.page) || 1;
       const pageSize = 20;
-      const limitPage = 1000;
+      const limitPage = 500;
       const pageToFind = page < limitPage ? page : limitPage;
 
       // Get movies count and movies
@@ -327,7 +327,7 @@ moviesRouter.get(
       // Get page value, pageSize, limiPage and query
       const page = Number(request.query.page) || 1;
       const pageSize = 20;
-      const limitPage = 1000;
+      const limitPage = 500;
       const query = request.query.query?.slice(0, 214) || '';
 
       if (!query) {

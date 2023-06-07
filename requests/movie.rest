@@ -22,13 +22,13 @@ GET http://localhost:3003/api/v1.0/movies/popular?page=500 HTTP/1.1
 GET http://localhost:3003/api/v1.0/movies/latest?page=80 HTTP/1.1
 
 ###    // Trending movies
-GET http://localhost:3003/api/v1.0/movies/trending?page=999 HTTP/1.1
+GET http://localhost:3003/api/v1.0/movies/trending?page=501 HTTP/1.1
 
 ###    // Search movies by query
 GET http://localhost:3003/api/v1.0/movies/search?query=mario&page=14 HTTP/1.1
 
 ###    // Get movies by genre
-GET http://localhost:3003/api/v1.0/movies/genre?genres=28&page=501
+GET http://localhost:3003/api/v1.0/movies/genre?genres=28&page=500
 
 ###   // All of the reviews of one movie
 GET http://localhost:3003/api/v1.0/movies/9799/reviews HTTP/1.1

@@ -117,7 +117,7 @@ describe('get latest movies', () => {
 });
 
 describe('get trending movies', () => {
-  const limitPage = 1000;
+  const limitPage = 500;
   const pageSize = 20;
   const baseUrl = '/api/v1.0/movies/trending';
   const urlToCheck = 'movies/trending';
@@ -237,7 +237,7 @@ describe('get movies by genre', () => {
 });
 
 describe('get movies by search query', () => {
-  const limitPage = 1000;
+  const limitPage = 500;
   const pageSize = 20;
   const baseUrl = '/api/v1.0/movies/search';
   const urlToCheck = 'movies/search';
