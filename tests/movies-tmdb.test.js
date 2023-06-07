@@ -244,7 +244,7 @@ describe('get movies by search query', () => {
 
   it('return right data with valid queries', async () => {
     const page = 1;
-    const query = 'mario';
+    const query = encodeURIComponent('mario');
 
     const response = await api.get(`${baseUrl}?page=${page}&query=${query}`).expect(200).expect('Content-Type', /application\/json/);
 
@@ -253,6 +253,7 @@ describe('get movies by search query', () => {
 
     const secondResponse = await api.get(`${baseUrl}?page=${pageSecond}&query=${query}`).expect(200);
 
+    expect(response.body.query).toBeDefined();
     expect(response.body.results).toBeDefined();
     expect(response.body.page).toBeDefined();
     expect(response.body.page_size).toBeDefined();
@@ -281,21 +282,46 @@ describe('get movies by search query', () => {
   });
 
   it('set default page to 1', async () => {
-    const query = 'mario';
+    const query = encodeURIComponent('mario');
     const response = await api.get(`${baseUrl}?query=${query}`).expect(200);
     expect(response.body.page).toBe(1);
   });
 
-  it('fails with status code 400 and array of errors if page is not valid', async () => {
-    const page = 'one';
-    const query = 'mario';
-    const response = await api.get(`${baseUrl}?page=${page}&query=${query}`).expect(400);
-    expect(response.body.errors).toBeDefined();
-    expect(response.body.errors.length).toBeGreaterThan(0);
+  it('right handle of encoded query', async () => {
+    const page = 2;
+    const query = encodeURIComponent('The flash');
+
+    const response = await api.get(`${baseUrl}?page=${page}&query=${query}`).expect(200).expect('Content-Type', /application\/json/);
+
+    // The query is returned decoded
+    expect(response.body.query).toBe(decodeURIComponent(query));
+
+    // The prev and next pages are returned with the query enconded
+    expect(response.body.next_page).toContain(`${urlToCheck}?query=${query}&page=${page + 1}`);
+    expect(response.body.prev_page).toContain(`${urlToCheck}?query=${query}&page=${page - 1}`);
   });
 
-  it('fails with status code 400 and array of errors if query is not defined', async () => {
-    const response = await api.get(`${baseUrl}`).expect(400);
+  it('return right data when query is empty', async () => {
+    const page = 1;
+    const query = '';
+
+    const response = await api.get(`${baseUrl}?page=${page}&query=${query}`).expect(200).expect('Content-Type', /application\/json/);
+    expect(response.body).toMatchObject({
+      page_size: 20,
+      prev_page: '',
+      next_page: '',
+      page,
+      results: [],
+      total_results: 0,
+      total_pages: 0,
+      query: '',
+    });
+  });
+
+  it('fails with status code 400 and array of errors if page is not valid', async () => {
+    const page = 'one';
+    const query = encodeURIComponent('mario');
+    const response = await api.get(`${baseUrl}?page=${page}&query=${query}`).expect(400);
     expect(response.body.errors).toBeDefined();
     expect(response.body.errors.length).toBeGreaterThan(0);
   });

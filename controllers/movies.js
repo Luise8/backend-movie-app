@@ -307,10 +307,10 @@ moviesRouter.get(
     .custom((value) => (value !== 0))
     .withMessage('Min value to page must be 1'),
   query('query')
-    .exists()
-    .withMessage('query is required')
-    .trim()
-    .customSanitizer((value) => value.replace(/\s{2,}/g, ' ')),
+    .customSanitizer((value) => {
+      const decodeQuery = decodeURIComponent(value);
+      return decodeQuery.trim().replace(/\s{2,}/g, ' ');
+    }),
   (req, res, next) => {
     try {
       const result = validationResult(req);
@@ -329,6 +329,21 @@ moviesRouter.get(
       const pageSize = 20;
       const limitPage = 1000;
       const query = request.query.query?.slice(0, 214) || '';
+
+      if (!query) {
+        const resultMovies = {
+          page_size: 20,
+          prev_page: '',
+          next_page: '',
+          page,
+          results: [],
+          total_results: 0,
+          total_pages: 0,
+          query,
+        };
+        return response.json(resultMovies);
+      }
+
       const pageToFind = page < limitPage ? page : limitPage;
 
       // Get movies count and movies
@@ -353,12 +368,13 @@ moviesRouter.get(
 
       const resultMovies = {
         page_size: 20,
-        prev_page: page === 1 || count === 0 ? '' : `movies/search?query=${query}&page=${prevPage}`,
-        next_page: (pageSize * page) < count ? `movies/search?query=${query}&page=${page + 1}` : '',
+        prev_page: page === 1 || count === 0 ? '' : `movies/search?query=${encodeURIComponent(query)}&page=${prevPage}`,
+        next_page: (pageSize * page) < count ? `movies/search?query=${encodeURIComponent(query)}&page=${page + 1}` : '',
         page,
         ...movieList.data,
         total_results: count,
         total_pages: Math.ceil(count / pageSize),
+        query,
       };
       response.json(resultMovies);
     } catch (error) {
