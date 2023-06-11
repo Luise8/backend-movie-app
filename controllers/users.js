@@ -295,6 +295,11 @@ usersRouter.put(
         const file = await readFile(request.file.path);
         const rezizedImg = await sharp(file)
           .toFormat('jpeg')
+          .flatten({
+            background: {
+              r: 255, g: 255, b: 255, alpha: 255,
+            },
+          })
           .resize(100, 100, { withoutEnlargement: true })
           .toBuffer();
 
@@ -303,7 +308,7 @@ usersRouter.put(
         // Save in db
         await ProfilePhoto
           .findByIdAndUpdate(request.user.photo.toString(), {
-            image: { data: rezizedImg, contentType: request.file.mimetype },
+            image: { data: rezizedImg, contentType: 'image/jpeg' },
           }, { session });
       }
       // Confirm transaction
