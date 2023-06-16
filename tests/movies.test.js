@@ -202,8 +202,10 @@ describe('when there is initially some movies saved in db', () => {
       expect(response.body.next_page).toBeDefined();
       expect(response.body.total_pages).toBeDefined();
       expect(response.body.total_results).toBeDefined();
+      console.log('🚀 ~ file: movies.test.js:207 ~ it.only ~ response.body.results:', response.body.results);
 
       expect(Array.isArray(response.body.results)).toBeTruthy();
+      expect(response.body.results.length).toBe(moviesIdRated.length);
       expect(response.body.total_results).toBe(moviesIdRated.length);
 
       expect(response.body.page_size).toBe(pageSize);

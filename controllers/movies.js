@@ -120,7 +120,7 @@ moviesRouter.get(
       // Get movie count and movies
       const count = await Movie.find({}).where('rateCount').gt(0).count();
       const movieList = await Movie.find({}).where('rateCount').gt(0).limit(pageSize)
-        .skip(pageSize * page)
+        .skip(pageSize * (page - 1))
         .sort({ rateAverage: -1, date: -1, idTMDB: -1 })
         .exec();
 
