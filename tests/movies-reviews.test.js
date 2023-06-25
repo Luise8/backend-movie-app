@@ -82,10 +82,14 @@ describe('when there is initially some movies and reviews saved in db', () => {
         expect(secondResponse.body.results).not.toContainEqual(reviewFirstResponse);
       });
 
+      const user = initialUsers
+        .find((item) => item._id === secondResponse.body.results[0].userId.id);
       expect(secondResponse.body.results).toHaveLength(pageSize);
       expect(secondResponse.body.page).toBe(page);
       expect(secondResponse.body.prev_page).toContain(`page=${page - 1}`);
       expect(secondResponse.body.next_page).toContain(`page=${page + 1}`);
+      expect(secondResponse.body.results[0].userId.username).toBe(user.username);
+
       expect(secondResponse.body.movie_details).toEqual({
         name: initialMovies[2].name,
         idTMDB: initialMovies[2].idTMDB,
@@ -140,6 +144,7 @@ describe('when there is initially some movies and reviews saved in db', () => {
           release_date: movieSelected.release_date,
         },
         ...formatedMovieSelected,
+        userId: formatedMovieSelected.userId.id,
       });
     });
 

@@ -633,7 +633,7 @@ moviesRouter.get(
       // Get count of reviews of movie and get reviews
         const count = await Review.find({ movieId: movie._id }).count();
         const reviews = await Review.find({ movieId: movie._id }).limit(pageSize)
-          .sort({ date: -1, userId: -1 }).skip(pageSize * page)
+          .sort({ date: -1, userId: -1 }).populate('userId', {username: 1}).skip(pageSize * page)
           .exec();
 
         // Get number of prev page
