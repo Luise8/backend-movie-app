@@ -2,7 +2,7 @@ const request = require('supertest');
 const session = require('express-session');
 const app = require('./app-helper');
 const { dbDisconnect, initializeMongoServer } = require('./mongo-config-testing');
-const { addInitialUsers, initialUsers } = require('./users-helper-db');
+const { addInitialUsers, initialUsers } = require('./test-db-helper');
 const authRouter = require('../controllers/auth');
 const passport = require('../utils/passport');
 
