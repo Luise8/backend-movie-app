@@ -816,7 +816,9 @@ usersRouter.post(
     .isLength({ min: 12, max: 175 })
     .withMessage('Title must be specified with min 12 characters and max 175 characters'),
   body('description')
-    .optional()
+    .optional({
+  	  checkFalsy: true,
+    })
     .trim()
     .customSanitizer((value) => value.replace(/\s{2,}/g, ' ')
       .replace(/-{2,}/g, '-')
@@ -847,7 +849,7 @@ usersRouter.post(
       const { name } = request.body;
       const { description } = request.body;
       const list = new List({
-        name, description, movies: [], userId: request.user.id, date: new Date(),
+        name, description: typeof description === 'string' ? description : '', movies: [], userId: request.user.id, date: new Date(),
       });
       await list.save({ session });
       const userToUpdate = await User.findById(request.params.id).session(session);
@@ -884,7 +886,9 @@ usersRouter.put(
     .isLength({ min: 12, max: 175 })
     .withMessage('Title must be specified with min 12 characters and max 175 characters'),
   body('description')
-    .optional()
+    .optional({
+  	  checkFalsy: true,
+    })
     .trim()
     .customSanitizer((value) => value.replace(/\s{2,}/g, ' ')
       .replace(/-{2,}/g, '-')
@@ -945,7 +949,8 @@ usersRouter.put(
       const list = await List.findById(request.params.listId).exec();
 
       if (name) list.name = name;
-      if (description) list.description = description;
+      if (typeof description === 'string') list.description = description;
+
       // If the movies parameter is not defined
       if (!movies) {
         session.endSession();
