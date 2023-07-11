@@ -756,7 +756,7 @@ moviesRouter.post(
       .replace(/,{2,}/g, ',')
       .replace(/\?{2,}/g, '?'))
     .isAlphanumeric('en-US', { ignore: ' \r\n-\'.,?' })
-    .withMessage('Description has no valid characters.')
+    .withMessage('Body has no valid characters.')
     .isLength({ min: 400, max: 10000 })
     .withMessage('Body must be specified with min 400 characters and max 10000 characters'),
   async (request, response, next) => {
@@ -867,7 +867,7 @@ moviesRouter.put(
       .replace(/,{2,}/g, ',')
       .replace(/\?{2,}/g, '?'))
     .isAlphanumeric('en-US', { ignore: ' \r\n-\'.,?' })
-    .withMessage('Description has no valid characters.')
+    .withMessage('Body has no valid characters.')
     .isLength({ min: 400, max: 10000 })
     .withMessage('Body must be specified with min 400 characters and max 10000 characters'),
   async (request, response, next) => {
