@@ -633,7 +633,8 @@ moviesRouter.get(
       // Get count of reviews of movie and get reviews
         const count = await Review.find({ movieId: movie._id }).count();
         const reviews = await Review.find({ movieId: movie._id }).limit(pageSize)
-          .sort({ date: -1, userId: -1 }).populate('userId', {username: 1}).skip(pageSize * page)
+          .sort({ date: -1, userId: -1 }).populate('userId', { username: 1 })
+          .skip(pageSize * page)
           .exec();
 
         // Get number of prev page
@@ -747,13 +748,14 @@ moviesRouter.post(
     .withMessage('Title must be specified with min 12 characters and max 175 characters'),
   body('body')
     .trim()
-    .customSanitizer((value) => value.replace(/\s{2,}/g, ' ')
+    .customSanitizer((value) => value.replace(/ {2,}/g, ' ')
+      .replace(/(\r\n|\r|\n){3,}/g, '\r\n\r\n' || '\r\r' || '\n\n')
       .replace(/-{2,}/g, '-')
       .replace(/'{2,}/g, '\'')
       .replace(/\.{2,}/g, '.')
       .replace(/,{2,}/g, ',')
       .replace(/\?{2,}/g, '?'))
-    .isAlphanumeric('en-US', { ignore: ' -\'.,?' })
+    .isAlphanumeric('en-US', { ignore: ' \r\n-\'.,?' })
     .withMessage('Description has no valid characters.')
     .isLength({ min: 400, max: 10000 })
     .withMessage('Body must be specified with min 400 characters and max 10000 characters'),
@@ -857,13 +859,14 @@ moviesRouter.put(
   body('body')
     .optional()
     .trim()
-    .customSanitizer((value) => value.replace(/\s{2,}/g, ' ')
+    .customSanitizer((value) => value.replace(/ {2,}/g, ' ')
+	    .replace(/(\r\n|\r|\n){3,}/g, '\r\n\r\n' || '\r\r' || '\n\n')
       .replace(/-{2,}/g, '-')
       .replace(/'{2,}/g, '\'')
       .replace(/\.{2,}/g, '.')
       .replace(/,{2,}/g, ',')
       .replace(/\?{2,}/g, '?'))
-    .isAlphanumeric('en-US', { ignore: ' -\'.,?' })
+    .isAlphanumeric('en-US', { ignore: ' \r\n-\'.,?' })
     .withMessage('Description has no valid characters.')
     .isLength({ min: 400, max: 10000 })
     .withMessage('Body must be specified with min 400 characters and max 10000 characters'),
