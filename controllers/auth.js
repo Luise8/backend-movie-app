@@ -7,9 +7,9 @@ authRouter.post(
   body('username')
     .custom((value) => !/\s/.test(value))
     .withMessage('No spaces are allowed in the username')
-    .isLength({ min: 5 })
+    .isLength({ min: 5, max: 20 })
     .escape()
-    .withMessage('Username must be specified with min 5 characters')
+    .withMessage('Username must be specified with min 5 and max 20 characters')
     .isAlphanumeric()
     .withMessage('Username has non-alphanumeric characters.'),
   body('password')

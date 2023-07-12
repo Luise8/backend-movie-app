@@ -43,9 +43,9 @@ usersRouter.post(
   body('username')
     .custom((value) => !/\s/.test(value))
     .withMessage('No spaces are allowed in the username')
-    .isLength({ min: 5 })
+    .isLength({ min: 5, max: 20 })
     .escape()
-    .withMessage('Username must be specified with min 5 characters')
+    .withMessage('Username must be specified with min 5 and max 20 characters')
     .isAlphanumeric()
     .withMessage('Username has non-alphanumeric characters.'),
   body('password')
@@ -167,8 +167,7 @@ usersRouter.put(
         // Request invalidates for fewer fields than required
         const { username, password, bio } = request.body;
         if (!username
-        || !password
-          || !bio) {
+        || !password) {
           if (request.hasOwnProperty('file')) {
             await unlink(request.file.path);
             return response.status(400).json({ error: 'missing fields' });
@@ -202,13 +201,16 @@ usersRouter.put(
     .trim()
     .custom((value) => !/\s/.test(value))
     .withMessage('No spaces are allowed in the username')
-    .isLength({ min: 5 })
+    .isLength({ min: 5, max: 20 })
     .escape()
-    .withMessage('Username must be specified with min 5 characters')
+    .withMessage('Username must be specified with min 5 and max 20 characters')
     .isAlphanumeric()
     .withMessage('Username has non-alphanumeric characters.'),
   body('bio')
     .trim()
+    .optional({
+      checkFalsy: true,
+    })
     .customSanitizer((value) => value.replace(/\s{2,}/g, ' ')
       .replace(/-{2,}/g, '-')
       .replace(/'{2,}/g, '\'')
@@ -216,7 +218,9 @@ usersRouter.put(
       .replace(/,{2,}/g, ',')
       .replace(/\?{2,}/g, '?'))
     .isAlphanumeric('en-US', { ignore: ' -\'.,?' })
-    .withMessage('Bio has valid characters.'),
+    .withMessage('Bio has non-valid characters.')
+    .isLength({ max: 300 })
+    .withMessage('Max length of bio is 300 characters.'),
   body('password')
     .trim()
     .custom((value) => !/\s/.test(value))
@@ -252,7 +256,7 @@ usersRouter.put(
       const userUpdated = await User.findByIdAndUpdate(request.params.id, {
         username: userToUpdate.username,
         passwordHash: hashedPassword,
-        bio: userToUpdate.bio,
+        bio: userToUpdate.bio || '',
       }, {
         new: true,
         runValidators: true,
