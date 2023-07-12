@@ -278,7 +278,6 @@ describe('when there is initially some users saved in db', () => {
         await api
           .put(`/api/v1.0/users/${initialUsers[0]._id}`)
           .field('username', newUserData.username)
-          .field('password', newUserData.password)
           .attach('photo', `${__dirname}/1.jpg`)
           .expect(400)
           .expect({
