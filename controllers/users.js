@@ -821,7 +821,7 @@ usersRouter.post(
     .withMessage('Title must be specified with min 12 characters and max 175 characters'),
   body('description')
     .optional({
-  	  checkFalsy: true,
+      checkFalsy: true,
     })
     .trim()
     .customSanitizer((value) => value.replace(/\s{2,}/g, ' ')
