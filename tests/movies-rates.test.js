@@ -40,7 +40,7 @@ beforeAll(async () => {
 });
 const api = request.agent(app);
 
-describe('when there is initially some movies and rates saved in db', () => {
+describe('when there is initially some movies and rates saved in DB', () => {
   // Get one rate for specific user
   describe('viewing a specific rate for specific user', () => {
     beforeAll(async () => {
@@ -111,7 +111,7 @@ describe('when there is initially some movies and rates saved in db', () => {
       await addInitialMovies();
       await addInitialRates();
     });
-    it('succeeds with valid data', async () => {
+    it('succeeds with valid data when the movie exist in DB and has not ratings', async () => {
       // Login
       await api
         .post('/api/v1.0/auth/login')
@@ -123,6 +123,10 @@ describe('when there is initially some movies and rates saved in db', () => {
       const newRate = {
         value: 3,
       };
+
+      // Get initial movie to give rate
+      const initialMovie = await api.get(`/api/v1.0/movies/${initialMovies[10].idTMDB}`);
+
       const res = await api
         .post(`/api/v1.0/movies/${initialMovies[10].idTMDB}/rates`)
         .send({
@@ -149,6 +153,69 @@ describe('when there is initially some movies and rates saved in db', () => {
       }).exec();
 
       expect(rateCreated).not.toBeNull();
+
+      // The movie's rateAverage, rateValue, and rateCount fields were  updated
+      const finalMovie = await api.get(`/api/v1.0/movies/${initialMovies[10].idTMDB}`);
+      const expectedValue = initialMovie.body.rateValue + newRate.value;
+      const expectedCount = initialMovie.body.rateCount + 1;
+      const expectedAverage = Math.round(expectedValue / expectedCount);
+
+      expect(finalMovie.body.rateValue).toBe(expectedValue);
+      expect(finalMovie.body.rateCount).toBe(expectedCount);
+      expect(finalMovie.body.rateAverage).toBe(expectedAverage);
+    });
+    it('succeeds with valid data when the movie exist in DB and has ratings', async () => {
+      // Login
+      await api
+        .post('/api/v1.0/auth/login')
+        .send({
+          username: initialUsers[2].username,
+          password: initialUsers[2].username, // The password is the same that username
+        });
+
+      const newRate = {
+        value: 3,
+      };
+
+      // Get initial movie to give rate
+      const initialMovie = await api.get(`/api/v1.0/movies/${initialMovies[0].idTMDB}`);
+
+      const res = await api
+        .post(`/api/v1.0/movies/${initialMovies[0].idTMDB}/rates`)
+        .send({
+          value: newRate.value,
+        }).expect(201)
+        .expect('Content-Type', /application\/json/);
+
+      // The info of the new rate
+      expect(res.body).toMatchObject({
+        userId: `${initialUsers[2]._id}`,
+        movieId: `${initialMovies[0]._id}`,
+        date: expect.any(String),
+        value: newRate.value,
+      });
+
+      // A new rate was added to the rates collection
+      const newListRates = await Rate.find().count();
+      expect(newListRates).toBe(initialRates.length + 1);
+
+      const rateCreated = await Rate.findOne({
+        userId: `${initialUsers[2]._id}`,
+        movieId: `${initialMovies[0]._id}`,
+        value: newRate.value,
+      }).exec();
+
+      expect(rateCreated).not.toBeNull();
+
+      // The movie's rateAverage, rateValue, and rateCount fields were  updated
+      const finalMovie = await api.get(`/api/v1.0/movies/${initialMovies[0].idTMDB}`);
+      const expectedValue = initialMovie.body.rateValue + newRate.value;
+      const expectedCount = initialMovie.body.rateCount + 1;
+      const expectedAverage = Math.round(expectedValue / expectedCount);
+
+      expect(finalMovie.body.rateValue).toBe(expectedValue);
+      expect(finalMovie.body.rateCount).toBe(expectedCount);
+      expect(finalMovie.body.rateAverage).toBe(expectedAverage);
     });
     it('fails with status code 404 if the movie does not exist', async () => {
       // Login
@@ -158,6 +225,9 @@ describe('when there is initially some movies and rates saved in db', () => {
           username: initialUsers[0].username,
           password: initialUsers[0].username, // The password is the same that username
         });
+
+      // Get initial movie to give rate
+      const initialMovie = await api.get(`/api/v1.0/movies/${initialMovies[10].idTMDB}`);
 
       const newRate = {
         value: 3,
@@ -172,8 +242,21 @@ describe('when there is initially some movies and rates saved in db', () => {
       // A new rate was not added to the rates collection
       const newListRates = await Rate.find().count();
       expect(newListRates).toBe(initialRates.length);
+
+      // The movie's rateAverage, rateValue, and rateCount fields were not updated
+      const finalMovie = await api.get(`/api/v1.0/movies/${initialMovies[10].idTMDB}`);
+      const expectedValue = initialMovie.body.rateValue;
+      const expectedCount = initialMovie.body.rateCount;
+      const expectedAverage = initialMovie.body.rateAverage;
+
+      expect(finalMovie.body.rateValue).toBe(expectedValue);
+      expect(finalMovie.body.rateCount).toBe(expectedCount);
+      expect(finalMovie.body.rateAverage).toBe(expectedAverage);
     });
     it('fails with status code 401 if the user is not logged in', async () => {
+      // Get initial movie to give rate
+      const initialMovie = await api.get(`/api/v1.0/movies/${initialMovies[10].idTMDB}`);
+
       const newRate = {
         value: 3,
       };
@@ -187,6 +270,16 @@ describe('when there is initially some movies and rates saved in db', () => {
       // A new rate was not added to the rates collection
       const newListRates = await Rate.find().count();
       expect(newListRates).toBe(initialRates.length);
+
+      // The movie's rateAverage, rateValue, and rateCount fields were not updated
+      const finalMovie = await api.get(`/api/v1.0/movies/${initialMovies[10].idTMDB}`);
+      const expectedValue = initialMovie.body.rateValue;
+      const expectedCount = initialMovie.body.rateCount;
+      const expectedAverage = initialMovie.body.rateAverage;
+
+      expect(finalMovie.body.rateValue).toBe(expectedValue);
+      expect(finalMovie.body.rateCount).toBe(expectedCount);
+      expect(finalMovie.body.rateAverage).toBe(expectedAverage);
     });
     it('fails with status code 400 if the inputs are invalids', async () => {
       // Login
@@ -196,6 +289,9 @@ describe('when there is initially some movies and rates saved in db', () => {
           username: initialUsers[0].username,
           password: initialUsers[0].username, // The password is the same that username
         });
+
+      // Get initial movie to give rate
+      const initialMovie = await api.get(`/api/v1.0/movies/${initialMovies[10].idTMDB}`);
 
       const newRate = {
         value: 100,
@@ -213,6 +309,16 @@ describe('when there is initially some movies and rates saved in db', () => {
       // A new rate was not added to the rates collection
       const newListRates = await Rate.find().count();
       expect(newListRates).toBe(initialRates.length);
+
+      // The movie's rateAverage, rateValue, and rateCount fields were not updated
+      const finalMovie = await api.get(`/api/v1.0/movies/${initialMovies[10].idTMDB}`);
+      const expectedValue = initialMovie.body.rateValue;
+      const expectedCount = initialMovie.body.rateCount;
+      const expectedAverage = initialMovie.body.rateAverage;
+
+      expect(finalMovie.body.rateValue).toBe(expectedValue);
+      expect(finalMovie.body.rateCount).toBe(expectedCount);
+      expect(finalMovie.body.rateAverage).toBe(expectedAverage);
     });
     it('fails with status code 409 if the user has already created a rate for a movie', async () => {
       // Login
@@ -273,18 +379,26 @@ describe('when there is initially some movies and rates saved in db', () => {
 
       // The movie was added to the movies collection
       expect(finalMovies.body.total).toBe(initialMovies.length + 1);
+
+      // The movie's rateAverage, rateValue, andrateCount fields were set to the given rate
+      const finalMovie = await api.get(`/api/v1.0/movies/${newMovieIdTMDB}`);
+      const expectedValue = newRate.value;
+      const expectedCount = 1;
+      const expectedAverage = newRate.value;
+
+      expect(finalMovie.body.rateValue).toBe(expectedValue);
+      expect(finalMovie.body.rateCount).toBe(expectedCount);
+      expect(finalMovie.body.rateAverage).toBe(expectedAverage);
     });
   });
 
   // Edit rates
   describe('edit rates', () => {
-    beforeAll(async () => {
-      await addInitialMovies();
-    });
     beforeEach(async () => {
       // To remove the session after every test
       await api
         .post('/api/v1.0/auth/logout').send();
+      await addInitialMovies();
       await addInitialRates();
     });
     it('succeeds with valid data', async () => {
@@ -295,6 +409,9 @@ describe('when there is initially some movies and rates saved in db', () => {
           username: initialUsers[0].username,
           password: initialUsers[0].username, // The password is the same that username
         });
+
+      // Get initial movie to update rate
+      const initialMovie = await api.get(`/api/v1.0/movies/${initialMovies[0].idTMDB}`);
 
       const newRate = {
         value: 3,
@@ -325,6 +442,15 @@ describe('when there is initially some movies and rates saved in db', () => {
       }).exec();
 
       expect(rateCreated.value).toBe(newRate.value);
+
+      // The movie's rateAverage, rateValue, fields were updated. The rateCount field didn't change
+      const finalMovie = await api.get(`/api/v1.0/movies/${initialMovies[0].idTMDB}`);
+      const expectedValue = (initialMovie.body.rateValue - rateToChange.value) + newRate.value;
+      const expectedCount = initialMovie.body.rateCount;
+      const expectedAverage = Math.round(expectedValue / expectedCount);
+      expect(finalMovie.body.rateValue).toBe(expectedValue);
+      expect(finalMovie.body.rateCount).toBe(expectedCount);
+      expect(finalMovie.body.rateAverage).toBe(expectedAverage);
     });
     it('fails with status code 404 if the movie does not exist', async () => {
       // Login
@@ -365,6 +491,9 @@ describe('when there is initially some movies and rates saved in db', () => {
           password: initialUsers[0].username, // The password is the same that username
         });
 
+      // Get initial movie to update rate
+      const initialMovie = await api.get(`/api/v1.0/movies/${initialMovies[0].idTMDB}`);
+
       const rateNonExistingId = new Rate({
         userId: `${initialUsers[0]._id}`,
         movieId: `${initialMovies[0]._id}`,
@@ -378,6 +507,15 @@ describe('when there is initially some movies and rates saved in db', () => {
         .send({
           value: 5,
         }).expect(404);
+
+      // The movie's rateAverage, rateValue and rateCount fields were not updated.
+      const finalMovie = await api.get(`/api/v1.0/movies/${initialMovies[0].idTMDB}`);
+      const expectedValue = initialMovie.body.rateValue;
+      const expectedCount = initialMovie.body.rateCount;
+      const expectedAverage = initialMovie.body.rateAverage;
+      expect(finalMovie.body.rateValue).toBe(expectedValue);
+      expect(finalMovie.body.rateCount).toBe(expectedCount);
+      expect(finalMovie.body.rateAverage).toBe(expectedAverage);
     });
     it('fails with status code 401 if the user is not the owner of the rate', async () => {
       // Login
@@ -388,6 +526,9 @@ describe('when there is initially some movies and rates saved in db', () => {
           password: initialUsers[1].username, // The password is the same that username
         });
 
+      // Get initial movie to update rate
+      const initialMovie = await api.get(`/api/v1.0/movies/${initialMovies[0].idTMDB}`);
+
       const newRate = {
         value: 3,
       };
@@ -408,8 +549,20 @@ describe('when there is initially some movies and rates saved in db', () => {
         movieId: `${initialMovies[0]._id}`,
       }).exec();
       expect(finalRate.value).toBe(rateToChange.value);
+
+      // The movie's rateAverage, rateValue and rateCount fields were not updated.
+      const finalMovie = await api.get(`/api/v1.0/movies/${initialMovies[0].idTMDB}`);
+      const expectedValue = initialMovie.body.rateValue;
+      const expectedCount = initialMovie.body.rateCount;
+      const expectedAverage = initialMovie.body.rateAverage;
+      expect(finalMovie.body.rateValue).toBe(expectedValue);
+      expect(finalMovie.body.rateCount).toBe(expectedCount);
+      expect(finalMovie.body.rateAverage).toBe(expectedAverage);
     });
     it('fails with status code 401 if the user is not logged in', async () => {
+      // Get initial movie to update rate
+      const initialMovie = await api.get(`/api/v1.0/movies/${initialMovies[0].idTMDB}`);
+
       const newRate = {
         value: 3,
       };
@@ -430,18 +583,25 @@ describe('when there is initially some movies and rates saved in db', () => {
         movieId: `${initialMovies[0]._id}`,
       }).exec();
       expect(finalRate.value).toBe(rateToChange.value);
+
+      // The movie's rateAverage, rateValue and rateCount fields were not updated.
+      const finalMovie = await api.get(`/api/v1.0/movies/${initialMovies[0].idTMDB}`);
+      const expectedValue = initialMovie.body.rateValue;
+      const expectedCount = initialMovie.body.rateCount;
+      const expectedAverage = initialMovie.body.rateAverage;
+      expect(finalMovie.body.rateValue).toBe(expectedValue);
+      expect(finalMovie.body.rateCount).toBe(expectedCount);
+      expect(finalMovie.body.rateAverage).toBe(expectedAverage);
     });
   });
 
   // Delete rates
-  describe('delete rates', () => {
-    beforeAll(async () => {
-      await addInitialMovies();
-    });
+  describe.only('delete rates', () => {
     beforeEach(async () => {
       // To remove the session after every test
       await api
         .post('/api/v1.0/auth/logout').send();
+      await addInitialMovies();
       await addInitialRates();
     });
     it('succeeds with valid data', async () => {
@@ -452,6 +612,9 @@ describe('when there is initially some movies and rates saved in db', () => {
           username: initialUsers[0].username,
           password: initialUsers[0].username, // The password is the same that username
         });
+
+      // Get initial rated movie
+      const initialMovie = await api.get(`/api/v1.0/movies/${initialMovies[0].idTMDB}`);
 
       const rateToDelete = initialRates
         .find((item) => item.userId === initialUsers[0]._id
@@ -468,6 +631,15 @@ describe('when there is initially some movies and rates saved in db', () => {
 
       const finalRateIds = finalRates.map((item) => item._id.toString());
       expect(finalRateIds).not.toContain(rateToDelete._id);
+
+      // The movie's rateAverage, rateValue, fields and rateCount were updated.
+      const finalMovie = await api.get(`/api/v1.0/movies/${initialMovies[0].idTMDB}`);
+      const expectedValue = initialMovie.body.rateValue - rateToDelete.value;
+      const expectedCount = initialMovie.body.rateCount - 1;
+      const expectedAverage = Math.round(expectedValue / expectedCount);
+      expect(finalMovie.body.rateValue).toBe(expectedValue);
+      expect(finalMovie.body.rateCount).toBe(expectedCount);
+      expect(finalMovie.body.rateAverage).toBe(expectedAverage);
     });
 
     it('fails with status code 404 if the movie does not exist', async () => {
@@ -504,6 +676,9 @@ describe('when there is initially some movies and rates saved in db', () => {
           password: initialUsers[0].username, // The password is the same that username
         });
 
+      // Get initial rated movie
+      const initialMovie = await api.get(`/api/v1.0/movies/${initialMovies[0].idTMDB}`);
+
       const rateNonExistingId = new Rate({
         userId: `${initialUsers[0]._id}`,
         movieId: `${initialMovies[0]._id}`,
@@ -521,6 +696,15 @@ describe('when there is initially some movies and rates saved in db', () => {
       const finalRates = await Rate.find().exec();
 
       expect(finalRates.length).toBe(initialRates.length);
+
+      // The movie's rateAverage, rateValue and rateCount fields were not updated.
+      const finalMovie = await api.get(`/api/v1.0/movies/${initialMovies[0].idTMDB}`);
+      const expectedValue = initialMovie.body.rateValue;
+      const expectedCount = initialMovie.body.rateCount;
+      const expectedAverage = initialMovie.body.rateAverage;
+      expect(finalMovie.body.rateValue).toBe(expectedValue);
+      expect(finalMovie.body.rateCount).toBe(expectedCount);
+      expect(finalMovie.body.rateAverage).toBe(expectedAverage);
     });
 
     it('fails with status code 401 if the user is not the owner of the rate', async () => {
@@ -531,6 +715,9 @@ describe('when there is initially some movies and rates saved in db', () => {
           username: initialUsers[1].username,
           password: initialUsers[1].username, // The password is the same that username
         });
+
+      // Get initial rated movie
+      const initialMovie = await api.get(`/api/v1.0/movies/${initialMovies[0].idTMDB}`);
 
       const rateToDelete = initialRates
         .find((item) => item.userId === initialUsers[0]._id
@@ -547,8 +734,20 @@ describe('when there is initially some movies and rates saved in db', () => {
 
       const finalRateIds = finalRates.map((item) => item._id.toString());
       expect(finalRateIds).toContain(rateToDelete._id);
+
+      // The movie's rateAverage, rateValue and rateCount fields were not updated.
+      const finalMovie = await api.get(`/api/v1.0/movies/${initialMovies[0].idTMDB}`);
+      const expectedValue = initialMovie.body.rateValue;
+      const expectedCount = initialMovie.body.rateCount;
+      const expectedAverage = initialMovie.body.rateAverage;
+      expect(finalMovie.body.rateValue).toBe(expectedValue);
+      expect(finalMovie.body.rateCount).toBe(expectedCount);
+      expect(finalMovie.body.rateAverage).toBe(expectedAverage);
     });
     it('fails with status code 401 if the user is not logged in', async () => {
+      // Get initial rated movie
+      const initialMovie = await api.get(`/api/v1.0/movies/${initialMovies[0].idTMDB}`);
+
       const rateToDelete = initialRates
         .find((item) => item.userId === initialUsers[0]._id
           && initialMovies[0]._id === item.movieId);
@@ -564,6 +763,15 @@ describe('when there is initially some movies and rates saved in db', () => {
 
       const finalRateIds = finalRates.map((item) => item._id.toString());
       expect(finalRateIds).toContain(rateToDelete._id);
+
+      // The movie's rateAverage, rateValue and rateCount fields were not updated.
+      const finalMovie = await api.get(`/api/v1.0/movies/${initialMovies[0].idTMDB}`);
+      const expectedValue = initialMovie.body.rateValue;
+      const expectedCount = initialMovie.body.rateCount;
+      const expectedAverage = initialMovie.body.rateAverage;
+      expect(finalMovie.body.rateValue).toBe(expectedValue);
+      expect(finalMovie.body.rateCount).toBe(expectedCount);
+      expect(finalMovie.body.rateAverage).toBe(expectedAverage);
     });
   });
 });

@@ -995,6 +995,13 @@ moviesRouter.post(
           session.endSession();
           return response.status(409).json({ message: 'Already created' });
         }
+
+        movie.rateValue += Number(request.body.value);
+        movie.rateCount += 1;
+        movie.rateAverage = Math
+          .round(movie.rateValue / movie.rateCount);
+
+        await movie.save({ session });
         const rateToSave = new Rate({
           value: request.body.value,
           date: new Date(),
@@ -1002,7 +1009,7 @@ moviesRouter.post(
           userId: user.id,
         });
 
-        const savedRate = await rateToSave.save();
+        const savedRate = await rateToSave.save({ session });
         await session.commitTransaction();
         session.endSession();
         return response.status(201).json(savedRate);
@@ -1025,6 +1032,9 @@ moviesRouter.post(
       const movieToSave = new Movie({
         ...newMovie,
       });
+      movieToSave.rateAverage = Number(request.body.value);
+      movieToSave.rateValue = Number(request.body.value);
+      movieToSave.rateCount = 1;
       const savedMovie = await movieToSave.save({ session });
       const rateToSave = new Rate({
         value: request.body.value,
@@ -1072,26 +1082,48 @@ moviesRouter.put(
     }
   },
   async (request, response, next) => {
+    const session = await mongoose.connection.startSession();
     try {
+      // Start transaction
+      session.startTransaction();
       const { user } = request;
 
       const movie = await Movie.findOne({ idTMDB: request.params.id });
       if (!movie) {
+        await session.abortTransaction();
+        session.endSession();
         return response.status(404).json({ error: 'Invalid input. Movie no found' });
       }
 
       const rate = await Rate
         .findOne({ movieId: movie.id, _id: request.params.rateId });
       if (!rate) {
+        await session.abortTransaction();
+        session.endSession();
         return response.status(404).json({ error: 'Invalid input. Rate no found' });
       }
 
-      if (user.id !== rate.userId.toString()) return response.status(401).json();
+      if (user.id !== rate.userId.toString()) {
+        await session.abortTransaction();
+        session.endSession();
+        return response.status(401).json();
+      }
+
+      movie.rateValue = (movie.rateValue - rate.value) + Number(request.body.value);
+      movie.rateAverage = Math.round(movie.rateValue / movie.rateCount);
+      await movie.save({ session });
 
       rate.value = request.body.value;
-      const savedReview = await rate.save();
-      return response.json(savedReview);
+      const savedRate = await rate.save({ session });
+
+      // Confirm transaction
+      await session.commitTransaction();
+      session.endSession();
+
+      return response.json(savedRate);
     } catch (error) {
+      await session.abortTransaction();
+      session.endSession();
       next(error);
     }
   },
@@ -1102,25 +1134,45 @@ moviesRouter.delete(
   '/:id/rates/:rateId',
   isAuth,
   async (request, response, next) => {
+    const session = await mongoose.connection.startSession();
     try {
+      // Start transaction
+      session.startTransaction();
       const { user } = request;
 
       const movie = await Movie.findOne({ idTMDB: request.params.id });
       if (!movie) {
+        await session.abortTransaction();
+        session.endSession();
         return response.status(404).json({ error: 'Invalid input. Movie no found' });
       }
 
       const rate = await Rate
         .findOne({ movieId: movie.id, _id: request.params.rateId });
       if (!rate) {
+        await session.abortTransaction();
+        session.endSession();
         return response.status(404).json({ error: 'Invalid input. Rate no found' });
       }
 
-      if (user.id !== rate.userId.toString()) return response.status(401).json();
+      if (user.id !== rate.userId.toString()) {
+        await session.abortTransaction();
+        session.endSession();
+        return response.status(401).json();
+      }
+      movie.rateValue -= rate.value;
+      movie.rateCount -= 1;
+      movie.rateAverage = Math.round(movie.rateValue / movie.rateCount);
+      await movie.save({ session });
+      await rate.deleteOne({ session });
+      // Confirm transaction
+      await session.commitTransaction();
+      session.endSession();
 
-      await rate.deleteOne();
       return response.status(204).end();
     } catch (error) {
+      await session.abortTransaction();
+      session.endSession();
       next(error);
     }
   },
