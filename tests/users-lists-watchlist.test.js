@@ -1,3 +1,4 @@
+/* eslint-disable no-underscore-dangle */
 require('dotenv').config();
 const request = require('supertest');
 const session = require('express-session');
@@ -1077,6 +1078,169 @@ describe('when there is initially some users and data in db', () => {
 
         // The movie was added to the movies collection
         expect(finalMovies.body.total).toBe(initialMovies.length + 1);
+      });
+    });
+  });
+
+  describe.only('all-lists-light route', () => {
+    beforeAll(async () => {
+      await addInitialMovies();
+      await addInitialLists();
+      await addInitialUsers();
+      await addInitialReviews();
+      await addInitialRates();
+      await addInitialProfilePhotos();
+      await addInitialWatchlists();
+    });
+    it('lists are returned as json', async () => {
+      // Login
+      await api
+        .post('/api/v1.0/auth/login')
+        .send({
+          username: initialUsers[0].username,
+          password: initialUsers[0].username, // The password is the same that username
+        });
+
+      await api.get(`/api/v1.0/users/${initialUsers[0]._id}/all-lists-light`).expect(200).expect('Content-Type', /application\/json/);
+    });
+    it('should includes two props: user_details and results', async () => {
+      // Login
+      await api
+        .post('/api/v1.0/auth/login')
+        .send({
+          username: initialUsers[0].username,
+          password: initialUsers[0].username, // The password is the same that username
+        });
+
+      const response = await api.get(`/api/v1.0/users/${initialUsers[0]._id}/all-lists-light`);
+
+      expect(response.body.user_details).toBeDefined();
+      expect(response.body.results).toBeDefined();
+    });
+
+    it('the user_details prop includes right data', async () => {
+      const { passwordHash, _id, ...user } = initialUsers[0];
+
+      // Login
+      await api
+        .post('/api/v1.0/auth/login')
+        .send({
+          username: initialUsers[0].username,
+          password: initialUsers[0].username, // The password is the same that username
+        });
+
+      const response = await api.get(`/api/v1.0/users/${initialUsers[0]._id}/all-lists-light`);
+
+      expect(response.body.user_details).toEqual({
+        ...user,
+        photo: null,
+        id: _id,
+      });
+    });
+
+    it('the results must be an array with length equal to count of lists of the user + 1 for the wacthlist', async () => {
+      const { passwordHash, _id, ...user } = initialUsers[0];
+
+      // Login
+      await api
+        .post('/api/v1.0/auth/login')
+        .send({
+          username: initialUsers[0].username,
+          password: initialUsers[0].username, // The password is the same that username
+        });
+
+      const response = await api.get(`/api/v1.0/users/${initialUsers[0]._id}/all-lists-light`);
+
+      expect(response.body.results).toHaveLength(user.lists.length + 1);
+    });
+
+    it('the items of the results array must be objects that includes only three props, name, id, and movies with right data', async () => {
+      // Login
+      await api
+        .post('/api/v1.0/auth/login')
+        .send({
+          username: initialUsers[0].username,
+          password: initialUsers[0].username, // The password is the same that username
+        });
+
+      const response = await api.get(`/api/v1.0/users/${initialUsers[0]._id}/all-lists-light`);
+
+      response.body.results.forEach((list) => {
+        expect(Object.keys(list).length).toBe(3);
+        expect(list).toEqual({
+          name: expect.any(String),
+          id: expect.any(String),
+          movies: expect.any(Array),
+        });
+      });
+    });
+
+    it('should return the right data of each list in the result prop, including the watchlist with the name: Watchlist', async () => {
+      // Login
+      await api
+        .post('/api/v1.0/auth/login')
+        .send({
+          username: initialUsers[0].username,
+          password: initialUsers[0].username, // The password is the same that username
+        });
+
+      const user = initialUsers[0];
+
+      // Get data
+      const response = await api.get(`/api/v1.0/users/${initialUsers[0]._id}/all-lists-light`);
+
+      // Get simple lists with name, id and movies array with idTMDB.
+      // This user only has 2 lists
+      const responseList1 = await api.get(`/api/v1.0/users/${initialUsers[0]._id}/lists/${user.lists[0]}`);
+
+      const responseList2 = await api.get(`/api/v1.0/users/${initialUsers[0]._id}/lists/${user.lists[1]}`);
+
+      const simpleList1 = {
+        id: responseList1.body.id,
+        name: responseList1.body.name,
+        movies: responseList1.body.results.map((movie) => movie.idTMDB),
+      };
+
+      const simpleList2 = {
+        id: responseList2.body.id,
+        name: responseList2.body.name,
+        movies: responseList2.body.results.map((movie) => movie.idTMDB),
+      };
+      // Check each list is included in the results array with the right data
+      expect(response.body.results).toContainEqual(simpleList1);
+      expect(response.body.results).toContainEqual(simpleList2);
+
+      // Check the watchlist case
+      // Get idTMDB of watchlist movies
+      const responseWatchlistLight = await api.get(`/api/v1.0/users/${initialUsers[0]._id}/watchlist/?light=1`);
+
+      const watchlistMoviesIdTMDB = responseWatchlistLight
+        .body.results.map((movie) => movie.idTMDB);
+
+      expect(response.body.results).toContainEqual({
+        id: user.watchlist,
+        name: 'Watchlist',
+        movies: watchlistMoviesIdTMDB,
+      });
+    });
+
+    it('fails with status code 401 if the user is not the owner of the account', async () => {
+      // Login
+      await api
+        .post('/api/v1.0/auth/login')
+        .send({
+          username: initialUsers[1].username,
+          password: initialUsers[1].username, // The password is the same that username
+        });
+
+      // Get data
+      await api.get(`/api/v1.0/users/${initialUsers[0]._id}/all-lists-light`).expect(401);
+    });
+
+    it('fails with status code 401 if the user is not logged in', async () => {
+      // Get data
+      await api.get(`/api/v1.0/users/${initialUsers[0]._id}/all-lists-light`).expect(401).expect({
+        msg: 'You are not authorized to view this resource',
       });
     });
   });

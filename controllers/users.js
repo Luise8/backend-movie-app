@@ -655,6 +655,63 @@ usersRouter.get(
   },
 );
 
+// Get All Lists names with the movies array only with the idTMDB
+usersRouter.get(
+  '/:id/all-lists-light',
+  isAuth,
+  async (request, response, next) => {
+    try {
+      if (request?.user?.id !== request.params.id) return response.status(401).end();
+
+      const user = await User.findById(request.params.id).populate('photo', { image: 1 })
+        .lean().exec();
+
+      // eslint-disable-next-line no-prototype-builtins
+      user.photo = user.photo.hasOwnProperty('image') ? `data:${user.photo.image.contentType};base64,${user.photo.image.data.toString('base64')}` : null;
+
+      const lists = await List.find({
+        userId: user.id,
+      }).sort({ date: -1, _id: -1 }).select('name').select('movies')
+        .populate({
+          path: 'movies',
+          select: {
+            idTMDB: 1,
+          },
+        })
+        .exec();
+      const simpleLists = lists.map((item) => {
+        const moviesIdTMDB = item.movies.map((movie) => movie.idTMDB);
+        return {
+          id: item.id, name: item.name, movies: [...moviesIdTMDB],
+        };
+      });
+
+      const watchlist = await Watchlist.findById(user.watchlist)
+        .select('id').select('movies')
+        .populate({
+          path: 'movies',
+          select: {
+            idTMDB: 1,
+          },
+        })
+        .exec();
+
+      const watchlistMoviesIdTMDB = watchlist.movies.map((movie) => movie.idTMDB);
+
+      const simpleWatchlist = {
+        id: watchlist.id, name: 'Watchlist', movies: [...watchlistMoviesIdTMDB],
+      };
+
+      response.json({
+        user_details: user,
+        results: simpleLists.concat(simpleWatchlist),
+      });
+    } catch (exception) {
+      next(exception);
+    }
+  },
+);
+
 // Get one list
 usersRouter.get(
   '/:id/lists/:listId',
