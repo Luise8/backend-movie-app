@@ -1162,7 +1162,11 @@ moviesRouter.delete(
       }
       movie.rateValue -= rate.value;
       movie.rateCount -= 1;
-      movie.rateAverage = Math.round(movie.rateValue / movie.rateCount);
+      if (movie.rateCount) {
+        movie.rateAverage = Math.round(movie.rateValue / movie.rateCount);
+      } else {
+        movie.rateAverage = 0;
+      }
       await movie.save({ session });
       await rate.deleteOne({ session });
       // Confirm transaction
