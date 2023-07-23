@@ -17,7 +17,7 @@ const ProfilePhoto = require('../models/profilePhoto');
 const Review = require('../models/review');
 const Rate = require('../models/rate');
 const Movie = require('../models/movie');
-const { isAuth } = require('../utils/middleware');
+const { isAuth, recatpchaCheck } = require('../utils/middleware');
 const { takeMovieData } = require('../utils/TMDB-functions');
 const config = require('../utils/config');
 
@@ -64,6 +64,8 @@ usersRouter.post(
       return next(error);
     }
   },
+
+  recatpchaCheck,
   async (request, response, next) => {
     try {
       bcrypt.hash(

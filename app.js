@@ -6,7 +6,6 @@ const MongoStore = require('connect-mongo');
 const cors = require('cors');
 const compression = require('compression');
 const helmet = require('helmet');
-const axios = require('axios');
 const config = require('./utils/config');
 const { logger } = require('./utils/logger');
 const middleware = require('./utils/middleware');
@@ -44,6 +43,9 @@ const app = express();
     saveUninitialized: true,
     cookie: {
       maxAge: 1000 * 60 * 60 * 24,
+      // To can store cookie on chrome
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'none',
     // Equals 1 day (1 day * 24 hr / 1 day * 60 min/ 1 hr * 60 sec/ 1 min * 1000 ms / 1 sec)
     },
     store: sessionStore,
@@ -55,23 +57,6 @@ const app = express();
   app.use(passport.initialize());
   app.use(passport.session());
   app.use(middleware.rateLimiter());
-  // Security checks with reCAPTCHA. Comment this middleware to run rest client tests
-  app.use(async (req, res, next) => {
-    try {
-      logger.http(req.ip);
-      logger.http(req.headers.referer);
-      if (!req.headers?.referer
-        || req.headers?.referer !== `${process.env.ORIGIN_FRONTEND}/`) return res.status(401).end();
-      if (!req.headers?.recaptcha || typeof req.headers?.recaptcha !== 'string') return res.status(401).end();
-      const url = `https://www.google.com/recaptcha/api/siteverify?secret=${process.env.SECRET_KEY}&response=${req.headers.recaptcha}`;
-      const response = await axios.post(url);
-      logger.http('🚀 ~ file: app.js:65 ~ app.use ~ response.data: %O', response.data);
-      if (response.data?.success === false) return res.status(401).end();
-      return next();
-    } catch (error) {
-      return next(error);
-    }
-  });
 
   app.use('/api/v1.0/movies', moviesRouter);
   app.use('/api/v1.0/auth', authRouter);

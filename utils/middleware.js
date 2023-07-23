@@ -1,6 +1,7 @@
 require('dotenv').config();
 const { RateLimiterMongo, RateLimiterMemory } = require('rate-limiter-flexible');
 const mongoose = require('mongoose');
+const axios = require('axios');
 const { logger } = require('./logger');
 
 const unknownEndpoint = (request, response) => {
@@ -26,6 +27,27 @@ const isAuth = (req, res, next) => {
     res.status(401).json({ msg: 'You are not authorized to view this resource' });
   }
 };
+
+// Security checks with reCAPTCHA. Comment out this middleware in the respective paths (POST /auth/login and POST /users/) to run tests
+async function recatpchaCheck(req, res, next) {
+  try {
+    logger.http(req.ip);
+    logger.http(req.headers.referer);
+    if (!req.headers?.referer
+        || req.headers?.referer !== `${process.env.ORIGIN_FRONTEND}/`) return res.status(401).end();
+    if (!req.headers?.recaptcha || typeof req.headers?.recaptcha !== 'string') return res.status(401).end();
+    const url = `https://www.google.com/recaptcha/api/siteverify?secret=${process.env.SECRET_KEY}&response=${req.headers.recaptcha}`;
+    const response = await axios.post(url);
+    logger.http('🚀 ~ file: app.js:65 ~ app.use ~ response.data: %O', response.data);
+    if (response.data?.success === false) {
+      // The browser error may appear with some old browsers or slow connections
+      if (response.data['error-codes'].lenght > 1 || response.data['error-codes'][0] !== 'browser-error') { return res.status(401).end(); }
+    }
+    return next();
+  } catch (error) {
+    return next(error);
+  }
+}
 
 function rateLimiter() {
   return function limit(req, res, next) {
@@ -76,4 +98,5 @@ module.exports = {
   errorHandler,
   isAuth,
   rateLimiter,
+  recatpchaCheck,
 };

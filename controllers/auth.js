@@ -1,6 +1,7 @@
 const authRouter = require('express').Router();
 const passport = require('passport');
 const { body, validationResult } = require('express-validator');
+const { recatpchaCheck } = require('../utils/middleware');
 
 authRouter.post(
   '/login',
@@ -29,6 +30,7 @@ authRouter.post(
       next(error);
     }
   },
+  recatpchaCheck,
   passport.authenticate('local'),
 
   (req, res, next) => {
