@@ -87,7 +87,12 @@ usersRouter.post(
             const photoUser = new ProfilePhoto({
               _id: user.photo,
             });
+            const watchlist = new Watchlist({
+              userId: user.id,
+              _id: user.watchlist,
+            });
             await photoUser.save();
+            await watchlist.save();
             const savedUser = await user.save();
             response.status(201).json(savedUser);
           } catch (err) {
