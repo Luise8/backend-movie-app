@@ -18,7 +18,7 @@ npm run dev
 
 ### Description
 
-API,that serves the data in JSON format.
+API, that serves the data in JSON format.
 
 It has functionalities: movies, user, authentication, sessions, reviews, rates, lists, watchlists.
 
